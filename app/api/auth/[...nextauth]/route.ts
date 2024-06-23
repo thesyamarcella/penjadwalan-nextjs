@@ -1,24 +1,18 @@
+// app/api/auth/[...nextauth]/route.ts
 import NextAuth from "next-auth";
-import GoogleProvider from "next-auth/providers/google";;
-import { NextRequest } from "next/server";
+import GoogleProvider from "next-auth/providers/google";
+import { NextAuthOptions } from "next-auth";
 
-export const authOptions = {
+export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
   ],
-
   secret: process.env.NEXTAUTH_SECRET!,
-
-  // Enable this if you need session persistence.
-  // session: {
-  //   strategy: "jwt",
-  // },
-
   callbacks: {
-    async signIn({ user }: { user: any }) {
+    async signIn({ user }) {
       // Check if user exists in your database here
       return true; // Allow sign-in
     },
