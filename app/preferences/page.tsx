@@ -50,6 +50,7 @@ interface ScheduleItem {
   };
   pengajaran: {
     dosen: {
+      id: number; // Add dosen id here
       nama_depan: string;
       nama_belakang: string;
     };
@@ -70,7 +71,8 @@ export default function PreferencesPage() {
   const [selectedDosenId, setSelectedDosenId] = useState<number | null>(null);
   const [slots, setSlots] = useState<Slot[]>([]);
   const [selectedSlots, setSelectedSlots] = useState<number[]>([]);
-  const [scheduleData, setScheduleData] = useState<ScheduleItem[]>([]);
+  const [allScheduleData, setAllScheduleData] = useState<ScheduleItem[]>([]);
+  const [filteredScheduleData, setFilteredScheduleData] = useState<ScheduleItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -88,9 +90,7 @@ export default function PreferencesPage() {
         .then((res) => res.json())
         .then((data) => {
           setDosen(data.items);
-          setSelectedDosenId(data.items[0]?.id || null);
-        })
-        .finally(() => setIsLoading(false));
+        });
 
       // Fetch slot data
       fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/slot")
@@ -98,6 +98,15 @@ export default function PreferencesPage() {
         .then((data) => {
           setSlots(data.items);
         });
+
+      // Fetch all schedule data
+      fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/jadwal/temp")
+        .then((res) => res.json())
+        .then((data) => {
+          setAllScheduleData(data.items);
+          setFilteredScheduleData(data.items); // Initially show all schedule data
+        })
+        .finally(() => setIsLoading(false));
     }
   }, [status, router]);
 
@@ -108,17 +117,17 @@ export default function PreferencesPage() {
       const initialPreferences = selectedDosen?.preferensi.map((pref) => pref.slot.id) || [];
       setSelectedSlots(initialPreferences);
 
-      // Fetch temporary schedule data for the selected dosen
-      fetch(`https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/jadwal/temp?dosenId=${selectedDosenId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          setScheduleData(data.items);
-        })
-        .finally(() => setIsLoading(false));
+      // Filter schedule data for the selected dosen
+      const filteredData = allScheduleData.filter(
+        (item) => item.pengajaran.dosen.id === selectedDosenId
+      );
+      setFilteredScheduleData(filteredData);
+
+      setIsLoading(false);
     } else {
-      setScheduleData([]); // Clear schedule data if no dosen selected
+      setFilteredScheduleData(allScheduleData); // Show all schedule data if no dosen selected
     }
-  }, [selectedDosenId, dosen]);
+  }, [selectedDosenId, dosen, allScheduleData]);
 
   const handleSavePreferences = async () => {
     if (!selectedDosenId) return;
@@ -142,10 +151,10 @@ export default function PreferencesPage() {
   };
 
   const scheduleForDay = (day: string) => {
-    return scheduleData
+    return filteredScheduleData
       .filter((item) => item.slot.day === day)
       .reduce((acc, item) => {
-        acc[item.slot.id] = item; 
+        acc[item.slot.id] = item;
         return acc;
       }, {} as Record<number, ScheduleItem | null>);
   };
@@ -177,28 +186,30 @@ export default function PreferencesPage() {
                 )}
               </Select>
             </Card>
-            <Card title="Preferences" style={{ marginTop: 16 }}>
-              <Space direction="vertical" style={{ width: "100%" }}>
-                {slots.map((slot) => (
-                  <Checkbox
-                    key={slot.id}
-                    checked={selectedSlots.includes(slot.id)}
-                    onChange={(e) => {
-                      setSelectedSlots(
-                        e.target.checked
-                          ? [...selectedSlots, slot.id]
-                          : selectedSlots.filter((id) => id !== slot.id)
-                      );
-                    }}
-                  >
-                    {`${slot.day} ${slot.start_time} - ${slot.end_time}`}
-                  </Checkbox>
-                ))}
-                <Button type="primary" onClick={handleSavePreferences}>
-                  Save Preferences
-                </Button>
-              </Space>
-            </Card>
+            {selectedDosenId && (
+              <Card title="Preferences" style={{ marginTop: 16 }}>
+                <Space direction="vertical" style={{ width: "100%" }}>
+                  {slots.map((slot) => (
+                    <Checkbox
+                      key={slot.id}
+                      checked={selectedSlots.includes(slot.id)}
+                      onChange={(e) => {
+                        setSelectedSlots(
+                          e.target.checked
+                            ? [...selectedSlots, slot.id]
+                            : selectedSlots.filter((id) => id !== slot.id)
+                        );
+                      }}
+                    >
+                      {`${slot.day} ${slot.start_time} - ${slot.end_time}`}
+                    </Checkbox>
+                  ))}
+                  <Button type="primary" onClick={handleSavePreferences}>
+                    Save Preferences
+                  </Button>
+                </Space>
+              </Card>
+            )}
           </Col>
           <Col xs={24} md={18}>
             <Card title="Temporary Schedule">
@@ -206,7 +217,12 @@ export default function PreferencesPage() {
                 pagination={false}
                 dataSource={slots.map((slot) => ({ key: slot.id }))}
                 columns={[
-                  { title: "Time", dataIndex: "key", key: "time", render: (slotId: number) => slots.find(slot => slot.id === slotId)?.start_time },
+                  {
+                    title: "Time",
+                    dataIndex: "key",
+                    key: "time",
+                    render: (slotId: number) => slots.find(slot => slot.id === slotId)?.start_time,
+                  },
                   ...daysOfWeek.map((day) => ({
                     title: day,
                     dataIndex: "key",
