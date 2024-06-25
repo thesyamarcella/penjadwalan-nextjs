@@ -3,7 +3,6 @@ import { Button } from 'antd';
 
 const Page = () => (
   <div className="App">
-    <Button type="primary">Button</Button>
   </div>
 );
 

@@ -42,9 +42,10 @@ export default function TemporarySchedulePage() {
   const [scheduleData, setScheduleData] = useState<ScheduleItem[]>([]);
   const [filteredData, setFilteredData] = useState<ScheduleItem[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(5);
   const [searchValue, setSearchValue] = useState("");
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [isLoading, setIsLoading] = useState();
   const [regenerateResponse, setRegenerateResponse] = useState<null | {
     best_violating_preferences: string[];
     conflict_list: string[];
@@ -194,18 +195,47 @@ export default function TemporarySchedulePage() {
   };
 
   return (
-    <div style={{ padding: 24 }}>
-      <Space direction="vertical" style={{ marginBottom: 16, width: '100%' }}>
-        <Input.Search
-          placeholder="Search by course"
-          value={searchValue}
-          onChange={(e) => setSearchValue(e.target.value)}
-          style={{ width: '100%' }}
-        />
-      </Space>
+    <div>
+      <Title level={2}>Temporary Schedule</Title>
 
+      <Input.Search
+        placeholder="Search by course"
+        value={searchValue}
+        onChange={(e) => setSearchValue(e.target.value)}
+        style={{ width: "100%", marginBottom: 16 }}
+      />
       <Row gutter={16}>
-        <Col span={6}>
+        <Col xs={24}>
+          {filteredData.some((item) => item.is_conflicted) && (
+            <Alert
+              message="There are schedule conflicts!"
+              type="warning"
+              showIcon
+              style={{ marginBottom: 16 }}
+            />
+          )}
+          <Card>
+            <Table
+              columns={columns}
+              dataSource={filteredData}
+              pagination={{
+                current: currentPage,
+                pageSize: pageSize,
+                total: filteredData.length,
+                onChange: (page, newPageSize) => {
+                  setCurrentPage(page);
+                  setPageSize(newPageSize);
+                },
+                showSizeChanger: true,
+              }}
+              onChange={onChange}
+              scroll={{ y: "calc(100vh - 250px)" }} // Adjust scroll height if needed
+            />
+          </Card>
+        </Col>
+      </Row>
+      <Row gutter={16} style={{ marginTop: 16 }}>
+        <Col xs={24} md={12}>
           <Card title="Regenerate Schedule">
             <Button type="primary" onClick={handleRegenerate} loading={isRegenerating}>
               Regenerate Schedule
@@ -227,35 +257,12 @@ export default function TemporarySchedulePage() {
               </div>
             )}
           </Card>
-
-          <Card title="Integrate with Google Calendar" style={{ marginTop: 16 }}>
+        </Col>
+        <Col xs={24} md={12}>
+          <Card title="Integrate with Google Calendar">
             <Button type="primary" onClick={handleGoogleCalendarIntegration}>
               Integrate with Google Calendar
             </Button>
-          </Card>
-        </Col>
-
-        <Col span={18}>
-          {filteredData.some((item) => item.is_conflicted) && (
-            <Alert message="There are schedule conflicts!" type="warning" showIcon style={{ marginBottom: 16 }} />
-          )}
-          <Card style={{ maxHeight: 'calc(100vh - 250px)', overflow: 'auto' }}>
-            <Table
-              columns={columns}
-              dataSource={filteredData}
-              pagination={{
-                current: currentPage,
-                pageSize: pageSize,
-                total: filteredData.length,
-                onChange: (page, newPageSize) => {
-                  setCurrentPage(page);
-                  setPageSize(newPageSize);
-                },
-                showSizeChanger: true
-              }}
-              onChange={onChange}
-              scroll={{ y: 'calc(100vh - 250px)' }}
-            />
           </Card>
         </Col>
       </Row>

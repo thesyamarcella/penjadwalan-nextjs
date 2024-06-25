@@ -160,7 +160,7 @@ export default function PreferencesPage() {
   };
 
   return (
-    <div style={{ padding: 24 }}>
+    <div>
       <Title level={2}>Preferences</Title>
 
       {isLoading ? (
@@ -213,7 +213,7 @@ export default function PreferencesPage() {
           </Col>
           <Col xs={24} md={18}>
             <Card title="Temporary Schedule">
-              <Table
+            <Table
                 pagination={false}
                 dataSource={slots.map((slot) => ({ key: slot.id }))}
                 columns={[
@@ -221,22 +221,28 @@ export default function PreferencesPage() {
                     title: "Time",
                     dataIndex: "key",
                     key: "time",
-                    render: (slotId: number) => slots.find(slot => slot.id === slotId)?.start_time,
+                    render: (slotId: number) =>
+                      slots.find((slot) => slot.id === slotId)?.start_time,
+                    fixed: "left",
+                    width: 100, // Set a fixed width for the Time column
                   },
                   ...daysOfWeek.map((day) => ({
                     title: day,
                     dataIndex: "key",
                     key: day,
+                    width: 150, // Set a fixed width for each day column
                     render: (slotId: number) => {
                       const scheduleItem = scheduleForDay(day)[slotId];
                       return scheduleItem ? (
                         <Tag color={scheduleItem.is_conflicted ? "red" : "green"}>
-                          {scheduleItem.pengajaran.mata_kuliah.nama_mata_kuliah} ({scheduleItem.pengajaran.kelas.nama_kelas})
+                          {scheduleItem.pengajaran.mata_kuliah.nama_mata_kuliah} (
+                          {scheduleItem.pengajaran.kelas.nama_kelas})
                         </Tag>
                       ) : null;
                     },
                   })),
                 ]}
+                scroll={{ x: true }} // Enable horizontal scroll for the table
               />
             </Card>
           </Col>

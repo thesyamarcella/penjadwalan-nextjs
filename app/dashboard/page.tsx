@@ -54,7 +54,7 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div style={{ padding: 24 }}>
+    <div>
       <Title level={2}>Dashboard</Title>
 
       <Card title="Temporary Schedule Summary">
