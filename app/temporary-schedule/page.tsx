@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { Card, Table, Tag, Typography, Alert, Input, Space, Button, message, Spin, Row, Col } from "antd";
+import { Card, Table, Tag, Typography, Alert, Input, Space, Button, message, Spin, Row, Col, Modal, Form, Select } from "antd";
 import { useRouter } from "next/navigation";
 import dayjs from "dayjs";
 
@@ -19,6 +19,7 @@ interface ScheduleItem {
     end_time: string;
   };
   ruangan: {
+    id: number;
     nama_ruangan: string;
   };
   pengajaran: {
@@ -36,6 +37,18 @@ interface ScheduleItem {
   is_conflicted?: boolean;
 }
 
+interface EmptySlot {
+  slot: {
+    id: number;
+    start_time: string;
+    end_time: string;
+    day: string;
+  };
+  room: {
+    nama_ruangan: string;
+  };
+}
+
 export default function TemporarySchedulePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -46,10 +59,18 @@ export default function TemporarySchedulePage() {
   const [searchValue, setSearchValue] = useState("");
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [isLoading, setIsLoading] = useState();
+  const [emptySlots, setEmptySlots] = useState<EmptySlot[]>([]);
+  const [selectedSlot, setSelectedSlot] = useState<EmptySlot | null>(null); 
+  const [selectedScheduleId, setSelectedScheduleId] = useState<number | null>(null);
+  const [hasConflicts, setHasConflicts] = useState(false);
   const [regenerateResponse, setRegenerateResponse] = useState<null | {
     best_violating_preferences: string[];
     conflict_list: string[];
   }>(null);
+
+  useEffect(() => {
+    setHasConflicts(scheduleData.some(item => item.is_conflicted));
+  }, [scheduleData]);
 
   useEffect(() => {
     if (status === "loading") {
@@ -57,9 +78,10 @@ export default function TemporarySchedulePage() {
     } else if (status === "unauthenticated") {
       router.push("/login");
     } else if (status === "authenticated") {
-      fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/jadwal/temp")
+      fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/jadwal/temp?page=1&size=500")
         .then((res) => res.json())
         .then((data) => {
+          console.log(data.items)
           setScheduleData(data.items);
           setFilteredData(data.items); // Initialize filteredData
         });
@@ -84,7 +106,7 @@ export default function TemporarySchedulePage() {
   const handleRegenerate = async () => {
     setIsRegenerating(true);
     try {
-      const response = await fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/jadwal/temp", {
+      const response = await fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/jadwal/temp?page=1&size=500", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -94,6 +116,10 @@ export default function TemporarySchedulePage() {
       if (response.ok) {
         const data = await response.json();
         setRegenerateResponse(data);
+
+        // Fetch updated schedule data after regeneration
+        await fetchScheduleData(); 
+
         message.success("Schedule regenerated successfully!");
       } else {
         message.error("Failed to regenerate schedule.");
@@ -103,6 +129,85 @@ export default function TemporarySchedulePage() {
       message.error("An error occurred while regenerating the schedule.");
     } finally {
       setIsRegenerating(false);
+    }
+  };
+
+  const fetchScheduleData = async () => {
+    try {
+      const response = await fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/jadwal/temp?page=1&size=500");
+      const data = await response.json();
+      setScheduleData(data.items);
+      setFilteredData(data.items);
+    } catch (error) {
+      console.error("Error fetching schedule data:", error);
+      message.error("An error occurred while fetching the schedule.");
+    }
+  };
+
+  const handleFixSchedule = async (scheduleItem: ScheduleItem) => {
+    try {
+      const response = await fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/jadwal/empty?page=1&size=100");
+      if (!response.ok) {
+        throw new Error(`API request failed with status ${response.status}`);
+      }
+      const data = await response.json();
+      setEmptySlots(data.items);
+      setSelectedScheduleId(scheduleItem.id);
+
+      // Open the Modal.confirm after fetching empty slots
+      Modal.confirm({
+        title: 'Select Empty Slot',
+        content: (
+          <Form onFinish={handleConfirmFix}>
+            <Form.Item name="emptySlotId" label="Empty Slot">
+              <Select options={data.items.map((item: any) => ({label: `${item.slot.day} ${item.slot.start_time} - ${item.slot.end_time}`, value: item.slot.id}))} />
+            </Form.Item>
+          </Form>
+        ),
+      });
+    } catch (error) {
+      console.error("Error fetching empty slots:", error);
+      message.error("An error occurred while fetching empty slots.");
+    }
+  };
+
+  const handleConfirmFix = async (values: any) => {
+    try {
+      const updateResponse = await fetch(
+        `https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/jadwal/temp/${selectedScheduleId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            id_slot: values.emptySlotId,
+            id_ruangan: emptySlots.find((slot: any) => slot.slot.id === values.emptySlotId)?.room.id || null,
+          }),
+        }
+      );
+
+      if (updateResponse.ok) {
+        const updatedData = await updateResponse.json();
+        setScheduleData(prev => prev.map(item => {
+          if (item.id === updatedData.id) {
+            return updatedData;
+          }
+          return item;
+        }));
+        setFilteredData(prev => prev.map(item => {
+          if (item.id === updatedData.id) {
+            return updatedData;
+          }
+          return item;
+        }));
+        message.success("Schedule conflict fixed successfully!");
+      } else {
+        throw new Error(`Failed to update schedule item with ID ${selectedScheduleId}`);
+      }
+    } catch (error) {
+      console.error("Error updating schedule:", error);
+      message.error("Error occurred while updating the schedule.");
     }
   };
 
@@ -177,16 +282,28 @@ export default function TemporarySchedulePage() {
       title: "Status",
       dataIndex: "is_conflicted",
       key: "status",
-      render: (isConflicted: boolean) => (
-        <Tag color={isConflicted ? "red" : "green"}>
-          {isConflicted ? "Conflict" : "OK"}
-        </Tag>
+      render: (isConflicted: boolean, record: ScheduleItem) => (
+        <>
+          <Tag color={isConflicted ? "red" : "green"}>
+            {isConflicted ? "Conflict" : "OK"}
+          </Tag>
+          {/* Add Fix button directly to the cell */}
+          {isConflicted && (
+            <Button
+              size="small"
+              type="link"
+              onClick={() => handleFixSchedule(record)}
+            >
+              Fix
+            </Button>
+          )}
+        </>
       ),
       filters: [
         { text: 'OK', value: false },
         { text: 'Conflict', value: true }
       ],
-      onFilter: (value :  any, record : any) => record.is_conflicted === value,
+      onFilter: (value :  any, record : any) => record.is_conflicted === value,
     },
   ];
 
@@ -196,25 +313,50 @@ export default function TemporarySchedulePage() {
 
   return (
     <div>
-      <Title level={2}>Temporary Schedule</Title>
+      <Title>Draft Jadwal</Title>
+      {/* Alert for Conflicts */}
+      {hasConflicts && regenerateResponse && (
+        <Alert
+          message="There are schedule conflicts!"
+          description={
+            <ul>
+              {regenerateResponse.conflict_list.map((conflict, index) => (
+                <li key={index}>{conflict}</li>
+              ))}
+            </ul>
+          }
+          type="warning"
+          showIcon
+          closable  // Make the alert closable
+          style={{ marginBottom: 16 }}
+        />
+      )}
 
-      <Input.Search
-        placeholder="Search by course"
-        value={searchValue}
-        onChange={(e) => setSearchValue(e.target.value)}
-        style={{ width: "100%", marginBottom: 16 }}
-      />
       <Row gutter={16}>
         <Col xs={24}>
-          {filteredData.some((item) => item.is_conflicted) && (
-            <Alert
-              message="There are schedule conflicts!"
-              type="warning"
-              showIcon
-              style={{ marginBottom: 16 }}
-            />
-          )}
           <Card>
+      <Row gutter={16} style={{ marginBottom: 16 }}>
+        <Col xs={24} md={12} lg={16}>  
+          <Input.Search
+            placeholder="Search by course"
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            style={{ width: "100%" }}
+          />
+        </Col>
+
+        <Col xs={24} md={6} lg={4}> 
+          <Button onClick={handleRegenerate} loading={isRegenerating} style={{ width: "100%" }}>
+            Generate Jadwal
+          </Button>
+        </Col>
+
+        <Col xs={24} md={6} lg={4}>
+          <Button onClick={handleGoogleCalendarIntegration} style={{ width: "100%" }}>
+            Simpan Jadwal
+          </Button>
+        </Col>
+      </Row>
             <Table
               columns={columns}
               dataSource={filteredData}
@@ -229,40 +371,8 @@ export default function TemporarySchedulePage() {
                 showSizeChanger: true,
               }}
               onChange={onChange}
-              scroll={{ y: "calc(100vh - 250px)" }} // Adjust scroll height if needed
+              scroll={{ y: "calc(100vh - 250px)" }}
             />
-          </Card>
-        </Col>
-      </Row>
-      <Row gutter={16} style={{ marginTop: 16 }}>
-        <Col xs={24} md={12}>
-          <Card title="Regenerate Schedule">
-            <Button type="primary" onClick={handleRegenerate} loading={isRegenerating}>
-              Regenerate Schedule
-            </Button>
-            {regenerateResponse && (
-              <div style={{ marginTop: 16, maxHeight: 'calc(100vh - 250px)', overflow: 'auto' }}>
-                <Title level={4}>Best Violating Preferences:</Title>
-                <ul>
-                  {regenerateResponse.best_violating_preferences.map((pref, index) => (
-                    <li key={index}>{pref}</li>
-                  ))}
-                </ul>
-                <Title level={4}>Conflict List:</Title>
-                <ul>
-                  {regenerateResponse.conflict_list.map((conflict, index) => (
-                    <li key={index}>{conflict}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </Card>
-        </Col>
-        <Col xs={24} md={12}>
-          <Card title="Integrate with Google Calendar">
-            <Button type="primary" onClick={handleGoogleCalendarIntegration}>
-              Integrate with Google Calendar
-            </Button>
           </Card>
         </Col>
       </Row>

@@ -99,7 +99,7 @@ const PengajaranPage: React.FC = () => {
 
   const fetchPengajaran = async () => {
     try {
-      const response = await fetch('https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/pengajaran'); 
+      const response = await fetch('https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/pengajaran?page=1&size=500'); 
       if (!response.ok) {
         throw new Error(`API request failed with status ${response.status}`);
       }
@@ -123,7 +123,7 @@ const PengajaranPage: React.FC = () => {
 
   const fetchOptions = async (endpoint: string): Promise<any[]> => {
     try {
-      const response = await fetch(`https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/${endpoint}`);
+      const response = await fetch(`https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/${endpoint}/page=1&size=500`);
       if (!response.ok) {
         throw new Error(`API request failed with status ${response.status}`);
       }

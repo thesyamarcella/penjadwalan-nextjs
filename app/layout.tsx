@@ -3,7 +3,6 @@
 import { Layout, Menu } from "antd";
 import AuthProvider from "./AuthProvider";
 import { usePathname, useRouter } from "next/navigation";
-import Sider from "antd/es/layout/Sider";
 import { useState } from "react";
 import {
   DashboardOutlined,
@@ -12,6 +11,7 @@ import {
   ScheduleOutlined,
   LoginOutlined
 } from "@ant-design/icons";
+import LoginButton from "./components/LoginButton";
 
 const { Header, Content } = Layout;
 
@@ -22,7 +22,7 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
 
   const items = [
     { key: "/dashboard", label: "Dashboard", icon: <DashboardOutlined /> },
-    { key: "/temporary-schedule", label: "Temporary Schedule", icon: <ScheduleOutlined /> },
+    { key: "/temporary-schedule", label: "Draft Jadwal", icon: <ScheduleOutlined /> },
     {
       key: "/data-management",
       label: "Data Management",
@@ -33,28 +33,40 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
       ],
     },
     { key: "/preferences", label: "Preferences", icon: <SettingOutlined /> },
-    { key: "/login", label: "Login", icon: <LoginOutlined /> }, 
+  
   ];
+
+  const isActive = (key: string) => pathname === key || pathname.startsWith(key);
+
 
   return (
     <html lang="en">
       <body>
         <AuthProvider>
-          <Layout>
-            <Sider collapsible theme="light" collapsed={collapsed} onCollapse={(value) => setCollapsed(value)}>
-              <div/> 
-              <Menu
-                theme="light"
-                mode="inline"
-                selectedKeys={[pathname]}
-                onClick={({key}) => router.push(key)}
-                items={items}
-              />
-            </Sider>
-            <Layout>
-              <Header style={{ background: "#fff", padding: 0,  position: "fixed" }} />
-              <Content style={{ margin: "16px" }}>{children}</Content>
-            </Layout>
+          <Layout style={{ minHeight: "100vh" }}>
+            <Header style={{ background: "#fff", padding: 0 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
+                {/* Existing Menu items on the left */}
+                <Menu
+                  theme="light"
+                  mode="horizontal"
+                  selectedKeys={items
+                    .filter((item) => isActive(item.key))
+                    .map((item) => item.key)}
+                  onClick={({ key }) => router.push(key)}
+                  items={items}
+                  style={{ width: "auto" }} // Let the menu take the available space
+                />
+
+                {/* LoginButton on the right */}
+                <div style={{ marginRight: 16 }}> {/* Add margin to the right */}
+                  <LoginButton />
+                </div>
+              </div>
+            </Header>
+            <Content style={{ margin: "0px 16px 0" }}>{/* Adjust top margin for the header */}
+              {children}
+            </Content>
           </Layout>
         </AuthProvider>
       </body>

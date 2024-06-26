@@ -31,7 +31,7 @@ const DosenPage: React.FC = () => {
   useEffect(() => {
     const fetchDosen = async () => {
       try {
-        const response = await fetch('https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/dosen');
+        const response = await fetch('https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/dosen/page=1&size=500');
         const data = await response.json();
         setDosen(data.items);
       } catch (error) {
