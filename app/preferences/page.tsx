@@ -104,7 +104,7 @@ export default function PreferencesPage() {
         .then((res) => res.json())
         .then((data) => {
           setAllScheduleData(data.items);
-          setFilteredScheduleData(data.items); // Initially show all schedule data
+          setFilteredScheduleData(data.items);
         })
         .finally(() => setIsLoading(false));
     }
@@ -224,13 +224,13 @@ export default function PreferencesPage() {
                     render: (slotId: number) =>
                       slots.find((slot) => slot.id === slotId)?.start_time,
                     fixed: "left",
-                    width: 100, // Set a fixed width for the Time column
+                    width: 100, 
                   },
                   ...daysOfWeek.map((day) => ({
                     title: day,
                     dataIndex: "key",
                     key: day,
-                    width: 150, // Set a fixed width for each day column
+                    width: 150,
                     render: (slotId: number) => {
                       const scheduleItem = scheduleForDay(day)[slotId];
                       return scheduleItem ? (
@@ -242,7 +242,7 @@ export default function PreferencesPage() {
                     },
                   })),
                 ]}
-                scroll={{ x: true }} // Enable horizontal scroll for the table
+                scroll={{ x: true }} 
               />
             </Card>
           </Col>

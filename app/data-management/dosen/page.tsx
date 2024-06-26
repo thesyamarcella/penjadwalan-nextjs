@@ -31,7 +31,7 @@ const DosenPage: React.FC = () => {
   useEffect(() => {
     const fetchDosen = async () => {
       try {
-        const response = await fetch('https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/dosen/page=1&size=500');
+        const response = await fetch('https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/dosen');
         const data = await response.json();
         setDosen(data.items);
       } catch (error) {
@@ -60,8 +60,8 @@ const DosenPage: React.FC = () => {
   
       if (isEditModal && selectedDosen) {
         const updatedPreferensi = (selectedDosen.preferensi || []).map(item => ({
-      id_dosen: selectedDosen.id, // Add the missing id_dosen field
-      id_slot: item.slot.id, // Add the missing id_slot field
+      id_dosen: selectedDosen.id, 
+      id_slot: item.slot.id, 
     }));
         const updatedRecord = {
           ...selectedDosen,
@@ -75,11 +75,11 @@ const DosenPage: React.FC = () => {
           agama: selectedDosen.agama,
           telp_seluler: selectedDosen.telp_seluler,
           preferensi: selectedDosen.preferensi.map(item => ({
-            id: item.id,               // Include the existing id
+            id: item.id,              
             id_dosen: item.id_dosen,
             id_slot: item.id_slot,
-            slot: item.slot,          // Include the entire slot object
-          })), // Keep the preferences array as it is
+            slot: item.slot,         
+          })), 
         };
   
         const response = await fetch(`https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/dosen${selectedDosen.id}`, {
@@ -229,7 +229,8 @@ const DosenPage: React.FC = () => {
         dataSource={filteredDosen}
         loading={loading}
         rowKey="id"
-        scroll={{ y: 450 }}
+        scroll={{ x: true, y: 450 }}
+        
       />
       <Modal
         title={isEditModal ? 'Edit Dosen' : 'Add Dosen'}

@@ -13,8 +13,8 @@ import { NextAuthOptions } from "next-auth";
   secret: process.env.NEXTAUTH_SECRET!,
   callbacks: {
     async signIn({ user }) {
-      // Check if user exists in your database here
-      return true; // Allow sign-in
+
+      return true; 
     },
   },
 };

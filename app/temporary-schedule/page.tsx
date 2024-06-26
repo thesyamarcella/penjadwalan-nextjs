@@ -81,9 +81,8 @@ export default function TemporarySchedulePage() {
       fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/jadwal/temp?page=1&size=500")
         .then((res) => res.json())
         .then((data) => {
-          console.log(data.items)
           setScheduleData(data.items);
-          setFilteredData(data.items); // Initialize filteredData
+          setFilteredData(data.items); 
         });
     }
   }, [status, router]);
@@ -116,8 +115,6 @@ export default function TemporarySchedulePage() {
       if (response.ok) {
         const data = await response.json();
         setRegenerateResponse(data);
-
-        // Fetch updated schedule data after regeneration
         await fetchScheduleData(); 
 
         message.success("Schedule regenerated successfully!");
@@ -153,8 +150,6 @@ export default function TemporarySchedulePage() {
       const data = await response.json();
       setEmptySlots(data.items);
       setSelectedScheduleId(scheduleItem.id);
-
-      // Open the Modal.confirm after fetching empty slots
       Modal.confirm({
         title: 'Select Empty Slot',
         content: (
@@ -173,6 +168,9 @@ export default function TemporarySchedulePage() {
 
   const handleConfirmFix = async (values: any) => {
     try {
+      const selectedEmptySlot = emptySlots.find((slot: EmptySlot) => slot.slot.id === values.emptySlotId); 
+      const roomId = selectedEmptySlot?.slot.id || null;
+  
       const updateResponse = await fetch(
         `https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/jadwal/temp/${selectedScheduleId}`,
         {
@@ -182,7 +180,7 @@ export default function TemporarySchedulePage() {
           },
           body: JSON.stringify({
             id_slot: values.emptySlotId,
-            id_ruangan: emptySlots.find((slot: any) => slot.slot.id === values.emptySlotId)?.room.id || null,
+            id_ruangan: roomId, 
           }),
         }
       );
@@ -313,7 +311,7 @@ export default function TemporarySchedulePage() {
 
   return (
     <div>
-      <Title>Draft Jadwal</Title>
+      <Title level={2}>Draft Jadwal</Title>
       {/* Alert for Conflicts */}
       {hasConflicts && regenerateResponse && (
         <Alert
@@ -327,7 +325,7 @@ export default function TemporarySchedulePage() {
           }
           type="warning"
           showIcon
-          closable  // Make the alert closable
+          closable 
           style={{ marginBottom: 16 }}
         />
       )}

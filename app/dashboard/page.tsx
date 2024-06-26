@@ -18,7 +18,7 @@ import { useRouter } from "next/navigation";
 import dayjs from "dayjs";
 import type { ColumnsType } from 'antd/es/table';
 import { ScheduleOutlined, TableOutlined } from '@ant-design/icons';
-import TimetableView from "../components/TimetableView";
+
 
 const { Title } = Typography;
 
@@ -59,7 +59,6 @@ export default function DashboardPage() {
     dosen: 0,
     kelas: 0,
     mataKuliah: 0,
-    semester: 0,
     ruangan: 0,
   });
   const [scheduleData, setScheduleData] = useState<ScheduleItem[]>([]);
@@ -78,17 +77,15 @@ export default function DashboardPage() {
       Promise.all([
         fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/dosen").then((res) => res.json()),
         fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/kelas").then((res) => res.json()),
-        fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/mata_kuliah").then((res) => res.json()),
-        fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/semester").then((res) => res.json()),
+        fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/mata-kuliah").then((res) => res.json()),
         fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/ruangan").then((res) => res.json()),
         fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/jadwal/temp?page=1&size=500").then((res) => res.json()),
       ])
-        .then(([dosenData, kelasData, mataKuliahData, semesterData, ruanganData, scheduleData]) => {
+        .then(([dosenData, kelasData, mataKuliahData, ruanganData, scheduleData]) => {
           setCounts({
             dosen: dosenData.total_elements,
             kelas: kelasData.total_elements,
             mataKuliah: mataKuliahData.total_elements,
-            semester: semesterData.total_elements,
             ruangan: ruanganData.total_elements,
           });
           console.log(scheduleData)
@@ -166,10 +163,10 @@ export default function DashboardPage() {
   ];
 
   const handleTableChange = (
-    pagination,
-    filters,
-    sorter,
-    extra
+    pagination : any,
+    filters : any,
+    sorter : any,
+    extra :any
   ) => {
     setCurrentPage(pagination.current!);
   };
@@ -187,7 +184,7 @@ export default function DashboardPage() {
         {Object.keys(counts).map(key => (
           <Col key={key} xs={24} sm={12} md={8} lg={6}>
             <Card>
-              <Statistic title={key} value={counts[key]} />
+            <Statistic title={key} value={counts[key as keyof typeof counts]} /> 
             </Card>
           </Col>
         ))}
@@ -235,7 +232,7 @@ export default function DashboardPage() {
             />
           </>
         ) : (
-          <TimetableView scheduleData={scheduleData} />
+          <button />
         )}
       </Card>
     </div>

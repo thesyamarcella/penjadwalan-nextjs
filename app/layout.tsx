@@ -55,16 +55,16 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
                     .map((item) => item.key)}
                   onClick={({ key }) => router.push(key)}
                   items={items}
-                  style={{ width: "auto" }} // Let the menu take the available space
+                  style={{ width: "auto" }} 
                 />
 
-                {/* LoginButton on the right */}
-                <div style={{ marginRight: 16 }}> {/* Add margin to the right */}
+                
+                <div style={{ marginRight: 16 }}> 
                   <LoginButton />
                 </div>
               </div>
             </Header>
-            <Content style={{ margin: "0px 16px 0" }}>{/* Adjust top margin for the header */}
+            <Content style={{ margin: "0px 16px 0" }}>
               {children}
             </Content>
           </Layout>

@@ -4,17 +4,17 @@ import { signIn, useSession } from "next-auth/react";
 import { Card, Button, Space, Typography } from "antd";
 import { GoogleOutlined } from "@ant-design/icons";
 import { useEffect } from "react";
-import { useRouter } from "next/navigation"; // Import useRouter
+import { useRouter } from "next/navigation"; 
 
 const { Title } = Typography;
 
 export default function LoginPage() {
   const { data: session, status } = useSession();
-  const router = useRouter(); // Get the router instance
+  const router = useRouter();
 
   useEffect(() => {
     if (status === "authenticated") {
-      router.push("/dashboard"); // Redirect to dashboard if logged in
+      router.push("/dashboard"); 
     }
   }, [status, router]);
 
