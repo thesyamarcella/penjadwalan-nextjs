@@ -28,7 +28,7 @@ interface Dosen {
 }
 
 interface Slot {
-  id: number; // Ensure the id property is included
+  id: number;
   day: string;
   start_time: string;
   end_time: string;
@@ -40,7 +40,7 @@ interface ScheduleItem {
   id_ruangan: number;
   id_pengajaran: number;
   slot: {
-    id: number; // Ensure the id property is included
+    id: number;
     day: string;
     start_time: string;
     end_time: string;
@@ -50,7 +50,7 @@ interface ScheduleItem {
   };
   pengajaran: {
     dosen: {
-      id: number; // Add dosen id here
+      id: number;
       nama_depan: string;
       nama_belakang: string;
     };
@@ -86,21 +86,21 @@ export default function PreferencesPage() {
       setIsLoading(true);
 
       // Fetch dosen data
-      fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/dosen")
+      fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/dosen?page=1&size=500")
         .then((res) => res.json())
         .then((data) => {
           setDosen(data.items);
         });
 
       // Fetch slot data
-      fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/slot")
+      fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/slot?page=1&size=500")
         .then((res) => res.json())
         .then((data) => {
           setSlots(data.items);
         });
 
       // Fetch all schedule data
-      fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/jadwal/temp")
+      fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/jadwal/temp?page=1&size=500")
         .then((res) => res.json())
         .then((data) => {
           setAllScheduleData(data.items);
@@ -154,37 +154,46 @@ export default function PreferencesPage() {
     return filteredScheduleData
       .filter((item) => item.slot.day === day)
       .reduce((acc, item) => {
-        acc[item.slot.id] = item;
+        if (!acc[item.slot.start_time]) {
+          acc[item.slot.start_time] = [];
+        }
+        acc[item.slot.start_time].push(item);
         return acc;
-      }, {} as Record<number, ScheduleItem | null>);
+      }, {} as Record<string, ScheduleItem[]>);
   };
+
+  const timeSlots = Array.from(new Set(slots.map(slot => slot.start_time))).sort();
 
   return (
     <div>
-      <Title level={2}>Preferences</Title>
-
       {isLoading ? (
-        <Spin size="large" />
+        <Spin size="large" style={{ width: "full", display: "flex", height: "100vh", justifyContent: "center", alignItems: "center" }} />
       ) : (
         <Row gutter={16}>
           <Col xs={24} md={6}>
             <Card title="Select Instructor">
-              <Select
-                placeholder="Select Instructor"
-                value={selectedDosenId}
-                onChange={(value) => setSelectedDosenId(value)}
-                style={{ width: "100%" }}
-              >
-                {Array.isArray(dosen) && dosen.length > 0 ? (
-                  dosen.map((dosen) => (
-                    <Select.Option key={dosen.id} value={dosen.id}>
-                      {`${dosen.nama_depan} ${dosen.nama_belakang}`}
-                    </Select.Option>
-                  ))
-                ) : (
-                  <Select.Option disabled>No instructors available</Select.Option>
-                )}
-              </Select>
+            <Select
+              placeholder="Select Instructor"
+              value={selectedDosenId || "all"} 
+              onChange={(value) => setSelectedDosenId(value !== "all" ? Number(value) : null)} 
+              style={{ width: "100%" }}
+            >
+              <Select.Option key="all" value="all">
+                Show All
+              </Select.Option>
+              {Array.isArray(dosen) && dosen.length > 0 ? (
+                dosen.map((dosen) => (
+                  <Select.Option key={dosen.id} value={dosen.id}>
+                    {`${dosen.nama_depan} ${dosen.nama_belakang}`}
+                  </Select.Option>
+                ))
+              ) : (
+                <Select.Option disabled>No instructors available</Select.Option>
+              )}
+            </Select>
+
+
+
             </Card>
             {selectedDosenId && (
               <Card title="Preferences" style={{ marginTop: 16 }}>
@@ -213,36 +222,39 @@ export default function PreferencesPage() {
           </Col>
           <Col xs={24} md={18}>
             <Card title="Temporary Schedule">
-            <Table
+              <Table
                 pagination={false}
-                dataSource={slots.map((slot) => ({ key: slot.id }))}
+                dataSource={timeSlots.map((time, index) => ({ key: index, time }))}
                 columns={[
                   {
                     title: "Time",
-                    dataIndex: "key",
+                    dataIndex: "time",
                     key: "time",
-                    render: (slotId: number) =>
-                      slots.find((slot) => slot.id === slotId)?.start_time,
+                    render: (time: string) => time,
                     fixed: "left",
-                    width: 100, 
+                    width: 100,
                   },
                   ...daysOfWeek.map((day) => ({
                     title: day,
-                    dataIndex: "key",
+                    dataIndex: "time",
                     key: day,
                     width: 150,
-                    render: (slotId: number) => {
-                      const scheduleItem = scheduleForDay(day)[slotId];
-                      return scheduleItem ? (
-                        <Tag color={scheduleItem.is_conflicted ? "red" : "green"}>
-                          {scheduleItem.pengajaran.mata_kuliah.nama_mata_kuliah} (
-                          {scheduleItem.pengajaran.kelas.nama_kelas})
-                        </Tag>
-                      ) : null;
+                    render: (time: string) => {
+                      const scheduleItems = scheduleForDay(day)[time] || [];
+                      return (
+                        <>
+                          {scheduleItems.map((item) => (
+                            <Tag key={item.id} color={item.is_conflicted ? "red" : "green"}>
+                              {item.pengajaran.mata_kuliah.nama_mata_kuliah}
+                              ({item.pengajaran.kelas.nama_kelas})
+                            </Tag>
+                          ))}
+                        </>
+                      );
                     },
                   })),
                 ]}
-                scroll={{ x: true }} 
+                scroll={{ x: true }}
               />
             </Card>
           </Col>

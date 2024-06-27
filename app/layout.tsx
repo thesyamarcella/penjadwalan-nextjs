@@ -31,8 +31,10 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
       key: "/data-management",
       label: "Data Management",
       icon: <TeamOutlined />,
+
     },
     { key: "/preferences", label: "Preferences", icon: <SettingOutlined /> },
+    { key: "/login", label: <LoginButton/> },
     
   
   ];
@@ -44,26 +46,28 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
     <html lang="en">
       <body>
         <AuthProvider>
-          <Layout style={{ minHeight: "100vh" }}>
-            <Header style={{ background: "#fff", padding: 0, display: "flex",  flex: 1, minWidth: 0, justifyContent: "space-between", alignItems: "center" }}>
-              
-                <Menu
-                  theme="light"
-                  mode="horizontal"
-                  selectedKeys={items
-                    .filter((item) => isActive(item.key))
-                    .map((item) => item.key)}
-                  onClick={({ key }) => router.push(key)}
-                  items={items}
-                  style={{ flex: 1, minWidth: 0 }}
-                />
-                <LoginButton />
-             
-            </Header>
-            <Content style={{ margin: "0px 16px 0" }}>
-              {children}
-            </Content>
-          </Layout>
+        <Layout style={{ minHeight: "100vh" }}>
+      <Header style={{ background: "#fff", padding: 0,  position: 'sticky' } }>
+        <Menu
+          theme="light"
+          mode="horizontal"
+          selectedKeys={items
+            .filter((item) => isActive(item.key))
+            .map((item) => item.key)}
+          onClick={({ key }) => router.push(key)}
+          style={{ lineHeight: "64px", justifyContent:"end", position: 'sticky'  }}
+        >
+          {items.map((item) => (
+            <Menu.Item key={item.key} icon={item.icon}>
+              {item.label}
+            </Menu.Item>
+          ))}
+        </Menu>
+      </Header>
+      <Content style={{ margin: "0 16px" }}>
+        <div style={{ padding: 24, minHeight: 360 }}>{children}</div>
+      </Content>
+    </Layout>
         </AuthProvider>
       </body>
     </html>

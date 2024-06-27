@@ -18,6 +18,7 @@ import { useRouter } from "next/navigation";
 import dayjs from "dayjs";
 import type { ColumnsType } from 'antd/es/table';
 import { ScheduleOutlined, TableOutlined } from '@ant-design/icons';
+import { PaginationType } from "antd/es/transfer/interface";
 
 
 const { Title } = Typography;
@@ -88,7 +89,6 @@ export default function DashboardPage() {
             mataKuliah: mataKuliahData.total_elements,
             ruangan: ruanganData.total_elements,
           });
-          console.log(scheduleData)
           setScheduleData(scheduleData.items);
           setFilteredData(scheduleData.items);
         })
@@ -176,8 +176,8 @@ export default function DashboardPage() {
   };
 
   return (
-    <div style={{ padding: 24 }}>
-      <Title level={2}>Dashboard</Title>
+    <div>
+      <Title>Dashboard</Title>
 
       {/* Data Count Cards */}
       <Row gutter={16} style={{ marginBottom: 16 }}>
@@ -229,6 +229,7 @@ export default function DashboardPage() {
               }}
               onChange={handleTableChange}
               scroll={{ x: true, y: 400 }}
+              
             />
           </>
         ) : (

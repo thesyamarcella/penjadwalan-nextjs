@@ -5,8 +5,11 @@ import { useSession } from "next-auth/react";
 import { Card, Table, Tag, Typography, Alert, Input, Space, Button, message, Spin, Row, Col, Modal, Form, Select } from "antd";
 import { useRouter } from "next/navigation";
 import dayjs from "dayjs";
+import { SessionType } from "../types/user";
 
 const { Title } = Typography;
+
+
 
 interface ScheduleItem {
   id: number;
@@ -50,7 +53,7 @@ interface EmptySlot {
 }
 
 export default function TemporarySchedulePage() {
-  const { data: session, status } = useSession();
+  const { data: session, status } = useSession() as unknown as  {data: SessionType, status : string};
   const router = useRouter();
   const [scheduleData, setScheduleData] = useState<ScheduleItem[]>([]);
   const [filteredData, setFilteredData] = useState<ScheduleItem[]>([]);
@@ -133,6 +136,7 @@ export default function TemporarySchedulePage() {
     try {
       const response = await fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/jadwal/temp?page=1&size=500");
       const data = await response.json();
+      console.log(data.items)
       setScheduleData(data.items);
       setFilteredData(data.items);
     } catch (error) {
@@ -210,23 +214,25 @@ export default function TemporarySchedulePage() {
   };
 
   const handleGoogleCalendarIntegration = async () => {
-    try {
-      const response = await fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/jadwal", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+    console.log(session.user.accessToken)
+    // try {
+    //   const response = await fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/jadwal", {
+    //     method: "POST",
+    //     headers: {
+    //       Authorization: `Bearer ${session?.user.accessToken}`,
+    //       "Content-Type": "application/json",
+    //     },
+    //   });
 
-      if (response.ok) {
-        message.success("Integrated with Google Calendar successfully!");
-      } else {
-        message.error("Failed to integrate with Google Calendar.");
-      }
-    } catch (error) {
-      console.error("Error integrating with Google Calendar:", error);
-      message.error("An error occurred while integrating with Google Calendar.");
-    }
+    //   if (response.ok) {
+    //     message.success("Integrated with Google Calendar successfully!");
+    //   } else {
+    //     message.error("Failed to integrate with Google Calendar.");
+    //   }
+    // } catch (error) {
+    //   console.error("Error integrating with Google Calendar:", error);
+    //   message.error("An error occurred while integrating with Google Calendar.");
+    // }
   };
 
   const columns = [
@@ -309,10 +315,10 @@ export default function TemporarySchedulePage() {
     console.log('params', pagination, filters, sorter, extra);
   };
 
+
+
   return (
-    <div>
-      <Title level={2}>Draft Jadwal</Title>
-      {/* Alert for Conflicts */}
+    <div style={{ padding: 24 }}>
       {hasConflicts && regenerateResponse && (
         <Alert
           message="There are schedule conflicts!"

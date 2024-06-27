@@ -71,6 +71,7 @@ const DataManagementPage: React.FC = () => {
   
 
   return (
+    <div>
     <Card>
       <Tabs activeKey={view} onChange={(key) => setView(key as any)}>
         <TabPane tab="Kelas" key="kelas" />
@@ -90,6 +91,8 @@ const DataManagementPage: React.FC = () => {
         onEdit={showModal}
       />
     </Card>
+
+    </div>
   );
 };
 
