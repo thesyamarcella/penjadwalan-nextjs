@@ -19,6 +19,10 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileMenuVisible, setMobileMenuVisible] = useState(false);
+  const toggleMobileMenu = () => {
+    setMobileMenuVisible(!mobileMenuVisible);
+  };
 
   const items = [
     { key: "/dashboard", label: "Dashboard", icon: <DashboardOutlined /> },
@@ -27,12 +31,9 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
       key: "/data-management",
       label: "Data Management",
       icon: <TeamOutlined />,
-      children: [
-        { key: "/data-management/dosen", label: "Dosen" },
-        { key: "/data-management/pengajaran", label: "Pengajaran" },
-      ],
     },
     { key: "/preferences", label: "Preferences", icon: <SettingOutlined /> },
+    
   
   ];
 
@@ -44,9 +45,8 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
       <body>
         <AuthProvider>
           <Layout style={{ minHeight: "100vh" }}>
-            <Header style={{ background: "#fff", padding: 0 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
-                {/* Existing Menu items on the left */}
+            <Header style={{ background: "#fff", padding: 0, display: "flex",  flex: 1, minWidth: 0, justifyContent: "space-between", alignItems: "center" }}>
+              
                 <Menu
                   theme="light"
                   mode="horizontal"
@@ -55,14 +55,10 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
                     .map((item) => item.key)}
                   onClick={({ key }) => router.push(key)}
                   items={items}
-                  style={{ width: "auto" }} 
+                  style={{ flex: 1, minWidth: 0 }}
                 />
-
-                
-                <div style={{ marginRight: 16 }}> 
-                  <LoginButton />
-                </div>
-              </div>
+                <LoginButton />
+             
             </Header>
             <Content style={{ margin: "0px 16px 0" }}>
               {children}

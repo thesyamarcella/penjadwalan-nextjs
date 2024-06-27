@@ -1,73 +1,78 @@
-// // components/TimetableView.tsx
+// TimetableView.tsx
 
-// import { Table } from 'antd';
-// import { useEffect, useState } from 'react';
+import { Table, Typography } from "antd";
+import dayjs from "dayjs";
+import type { ColumnsType } from 'antd/es/table';
 
-// const TimetableView = () => {
-//   const [scheduleData, setScheduleData] = useState([]);
+interface TimetableViewProps {
+  scheduleData: ScheduleItem[];
+}
 
-//   useEffect(() => {
-//     const fetchData = async () => {
-//       try {
-//         const response = await fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/jadwal/temp?page=1&size=500");
-//         if (!response.ok) {
-//           throw new Error('Failed to fetch data');
-//         }
-//         const data = await response.json();
-//         setScheduleData(data); // Setelah berhasil fetch data, set ke state scheduleData
-//       } catch (error) {
-//         console.error('Error fetching data:', error);
-//         // Handle error fetching data, misalnya menampilkan pesan error atau fallback
-//       }
-//     };
+const { Title } = Typography;
 
-//     fetchData();
-//   }, []); // Fetch data hanya sekali saat komponen dimount
+const TimetableView: React.FC<TimetableViewProps> = ({ scheduleData }) => {
+  // Group schedule data by day
+  const groupedData: { [key: string]: ScheduleItem[] } = {};
+  scheduleData.forEach((item) => {
+    const day = item.slot.day;
+    if (!groupedData[day]) {
+      groupedData[day] = [];
+    }
+    groupedData[day].push(item);
+  });
 
-//   // Mengubah data jadwal menjadi format tabel yang dibutuhkan oleh Ant Design
-//   const transformedData = scheduleData.map(item => ({
-//     key: item.id,
-//     time: `${item.slot.start_time} - ${item.slot.end_time}`,
-//     day: item.slot.day,
-//     ruangan: `${item.ruangan.nama_gedung} - Ruangan ${item.ruangan.nama_ruangan}`,
-//     mataKuliah: item.pengajaran.mata_kuliah.nama_mata_kuliah,
-//     dosen: `${item.pengajaran.dosen.gelar_depan} ${item.pengajaran.dosen.nama_depan} ${item.pengajaran.dosen.nama_belakang} ${item.pengajaran.dosen.gelar_belakang}`,
-//   }));
+  // Generate columns dynamically based on unique days
+  const columns: ColumnsType<ScheduleItem> = [
+    {
+      title: "Time",
+      dataIndex: "time",
+      key: "time",
+      render: (_, record) => `${record.slot.start_time} - ${record.slot.end_time}`,
+    },
+    ...Object.keys(groupedData).map((day) => ({
+      title: day,
+      dataIndex: day,
+      key: day,
+      render: (_ : any, record : any) => {
+        const items = groupedData[day].filter((item) => item.id === record.id);
+        return (
+          <div>
+            {items.map((item) => (
+              <div key={item.id}>
+                {item.pengajaran.mata_kuliah.nama_mata_kuliah} - {item.ruangan.nama_ruangan}
+              </div>
+            ))}
+          </div>
+        );
+      },
+    })),
+  ];
 
-//   // Kolom-kolom yang akan ditampilkan di tabel
-//   const columns = [
-//     {
-//       title: 'Jam',
-//       dataIndex: 'time',
-//       key: 'time',
-//     },
-//     {
-//       title: 'Senin',
-//       dataIndex: 'day',
-//       key: 'day',
-//       render: (text, record) => {
-//         if (record.day === 'Mon') {
-//           return (
-//             <>
-//               <div>Ruangan: {record.ruangan}</div>
-//               <div>Mata Kuliah: {record.mataKuliah}</div>
-//               <div>Dosen: {record.dosen}</div>
-//             </>
-//           );
-//         }
-//         return null;
-//       },
-//     },
-//     // Kolom untuk hari-hari lainnya bisa ditambahkan di sini
-//   ];
+  // Flatten data for table rows
+  const tableData = scheduleData.map((item) => ({
+    ...item,
+    key: item.id.toString(),
+    time: `${item.slot.start_time} - ${item.slot.end_time}`,
+    ...groupedData[item.slot.day].reduce<Record<string, ScheduleItem>>(
+        (acc, cur) => {
+          acc[cur.slot.day] = cur;
+          return acc;
+        },
+        {} 
+      ),
+    }));
 
-//   return (
-//     <Table
-//       columns={columns}
-//       dataSource={transformedData}
-//       pagination={false} // Jika ingin menampilkan pagination, ubah menjadi `pagination={true}`
-//     />
-//   );
-// };
+  return (
+    <div>
+      <Title level={3}>Timetable View</Title>
+      <Table
+        columns={columns}
+        dataSource={tableData}
+        pagination={false}
+        scroll={{ x: true, y: 400 }}
+      />
+    </div>
+  );
+};
 
-// export default TimetableView;
+export default TimetableView;

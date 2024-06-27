@@ -228,7 +228,7 @@ export default function DashboardPage() {
                 showSizeChanger: true,
               }}
               onChange={handleTableChange}
-              scroll={{ y: "calc(100vh - 250px)" }}
+              scroll={{ x: true, y: 400 }}
             />
           </>
         ) : (

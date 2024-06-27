@@ -2,6 +2,9 @@
 import { Button } from "antd";
 import { useRouter } from "next/navigation";
 import { useSession, signIn, signOut } from "next-auth/react";
+import { Kelas, Ruangan, MataKuliah, Pengajaran, DataType } from '../interfaces';
+import { formItemsMap, columnsMap } from '../config';
+
 
 const LoginButton = () => {
   const { data: session, status } = useSession();
@@ -26,7 +29,7 @@ const LoginButton = () => {
       <Button 
         type="primary" 
         onClick={() => signOut()} 
-        style={{ marginRight: 16 }} 
+        style={{ marginRight: 16, alignItems: "center"}} 
       >
         Logout
       </Button>
