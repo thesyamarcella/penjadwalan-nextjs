@@ -13,43 +13,20 @@ import {
   Button,
   Radio,
   RadioChangeEvent,
+  message,
 } from "antd";
 import { useRouter } from "next/navigation";
 import dayjs from "dayjs";
 import type { ColumnsType } from 'antd/es/table';
 import { ScheduleOutlined, TableOutlined } from '@ant-design/icons';
 import { PaginationType } from "antd/es/transfer/interface";
+import TemporarySchedule from "../components/TemporarySchedule";
+import { Dosen, Kelas, Ruangan, Slot, ScheduleItem } from "../types/type";
 
 
 const { Title } = Typography;
 
-interface ScheduleItem {
-  id: number;
-  id_slot: number;
-  id_ruangan: number;
-  id_pengajaran: number;
-  slot: {
-    day: string;
-    start_time: string;
-    end_time: string;
-  };
-  ruangan: {
-    id: number;
-    nama_ruangan: string;
-  };
-  pengajaran: {
-    dosen: {
-      nama_depan: string;
-      nama_belakang: string;
-    };
-    kelas: {
-      nama_kelas: string;
-    };
-    mata_kuliah: {
-      nama_mata_kuliah: string;
-    };
-  };
-}
+
 
 
 export default function DashboardPage() {
@@ -61,6 +38,7 @@ export default function DashboardPage() {
     kelas: 0,
     mataKuliah: 0,
     ruangan: 0,
+    pengajaran: 0,
   });
   const [scheduleData, setScheduleData] = useState<ScheduleItem[]>([]);
   const [filteredData, setFilteredData] = useState<ScheduleItem[]>([]);
@@ -68,6 +46,17 @@ export default function DashboardPage() {
   const [pageSize, setPageSize] = useState(10);
   const [searchValue, setSearchValue] = useState("");
   const [viewMode, setViewMode] = useState("table");
+  const [dosen, setDosen] = useState<Dosen[]>([]);
+  const [kelas, setKelas] = useState<Kelas[]>([]);
+  const [ruangan, setRuangan] = useState<Ruangan[]>([]);
+  const [selectedDosenId, setSelectedDosenId] = useState<number | null>(null);
+  const [selectedKelasId, setSelectedKelasId] = useState<number | null>(null);
+  const [selectedRuanganId, setSelectedRuanganId] = useState<number | null>(null);
+  const [slots, setSlots] = useState<Slot[]>([]);
+  const [selectedSlots, setSelectedSlots] = useState<number[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [allScheduleData, setAllScheduleData] = useState<ScheduleItem[]>([]);
+  const [filteredScheduleData, setFilteredScheduleData] = useState<ScheduleItem[]>([]);
 
   useEffect(() => {
     if (status === "loading") {
@@ -81,13 +70,16 @@ export default function DashboardPage() {
         fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/mata-kuliah").then((res) => res.json()),
         fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/ruangan").then((res) => res.json()),
         fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/jadwal/temp?page=1&size=500").then((res) => res.json()),
+        fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/pengajaran").then((res) => res.json()),
       ])
-        .then(([dosenData, kelasData, mataKuliahData, ruanganData, scheduleData]) => {
+        .then(([dosenData, kelasData, mataKuliahData, ruanganData, scheduleData, pengajaranData]) => {
           setCounts({
             dosen: dosenData.total_elements,
             kelas: kelasData.total_elements,
             mataKuliah: mataKuliahData.total_elements,
             ruangan: ruanganData.total_elements,
+            pengajaran: pengajaranData.total_elements,
+            
           });
           setScheduleData(scheduleData.items);
           setFilteredData(scheduleData.items);
@@ -112,6 +104,57 @@ export default function DashboardPage() {
     setFilteredData(filtered.length > 0 ? filtered : scheduleData);
     setCurrentPage(1);
   }, [searchValue, scheduleData]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const [dosenRes, slotsRes, scheduleRes, kelasRes, ruanganRes] = await Promise.all([
+          fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/dosen?page=1&size=500"),
+          fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/slot?page=1&size=500"),
+          fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/jadwal/temp?page=1&size=500"),
+          fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/kelas?page=1&size=500"),
+          fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/ruangan?page=1&size=500"),
+        ]);
+
+        if (!dosenRes.ok || !slotsRes.ok || !scheduleRes.ok || !kelasRes.ok || !ruanganRes.ok) {
+          throw new Error("Failed to fetch data");
+        }
+
+        const [dosenData, slotsData, scheduleData, kelasData, ruanganData] = await Promise.all([
+          dosenRes.json(),
+          slotsRes.json(),
+          scheduleRes.json(),
+          kelasRes.json(),
+          ruanganRes.json(),
+        ]);
+
+        setDosen(dosenData.items);
+        setSlots(slotsData.items);
+        setAllScheduleData(scheduleData.items);
+        setKelas(kelasData.items);
+        setRuangan(ruanganData.items);
+      } catch (error) {
+        message.error("Failed to load data");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    setFilteredScheduleData(
+      allScheduleData.filter((item) => {
+        const matchDosen = selectedDosenId ? item.pengajaran.dosen.id === selectedDosenId : true;
+        const matchKelas = selectedKelasId ? item.pengajaran.kelas.id === selectedKelasId : true;
+        const matchRuangan = selectedRuanganId ? item.ruangan.id === selectedRuanganId : true;
+        return matchDosen && matchKelas && matchRuangan;
+      })
+    );
+  }, [selectedDosenId, selectedKelasId, selectedRuanganId, allScheduleData]);
+
 
   const columns: ColumnsType<ScheduleItem> = [
     {
@@ -175,6 +218,24 @@ export default function DashboardPage() {
     setViewMode(e.target.value);
   };
 
+  const handleDosenChange = (dosenId: number | null) => {
+    setSelectedDosenId(dosenId);
+  };
+
+  const handleKelasChange = (kelasId: number | null) => {
+    setSelectedKelasId(kelasId);
+  };
+
+  const handleRuanganChange = (ruanganId: number | null) => {
+    setSelectedRuanganId(ruanganId);
+  };
+
+  const handleSlotChange = (slotId: number, checked: boolean) => {
+    setSelectedSlots((prevSelectedSlots) =>
+      checked ? [...prevSelectedSlots, slotId] : prevSelectedSlots.filter((id) => id !== slotId)
+    );
+  };
+
   return (
     <div>
       <Title>Dashboard</Title>
@@ -203,7 +264,7 @@ export default function DashboardPage() {
       {/* Schedule Table or Timetable View */}
       <Card title="Jadwal">
         {viewMode === "table" ? (
-          <>
+          <Card>
             <Row gutter={16} style={{ marginBottom: 16 }}>
               <Col xs={24} md={12} lg={16}>
                 <Input.Search
@@ -231,9 +292,21 @@ export default function DashboardPage() {
               scroll={{ x: true, y: 400 }}
               
             />
-          </>
+          </Card>
         ) : (
-          <button />
+          <TemporarySchedule
+          slots={slots}
+          filteredScheduleData={filteredScheduleData}
+          dosen={dosen}
+          kelas={kelas}
+          ruangan={ruangan}
+          selectedDosenId={selectedDosenId}
+          selectedKelasId={selectedKelasId}
+          selectedRuanganId={selectedRuanganId}
+          onDosenChange={handleDosenChange}
+          onKelasChange={handleKelasChange}
+          onRuanganChange={handleRuanganChange}
+        />
         )}
       </Card>
     </div>

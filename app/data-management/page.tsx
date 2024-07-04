@@ -4,7 +4,7 @@ import { Button, message, Card, Form, Tabs } from 'antd';
 import TableView from '../components/TableView';
 import ModalForm from '../components/ModalForm';
 import SearchBar from '../components/SearchBar';
-import { Kelas, Ruangan, MataKuliah, Pengajaran, DataType, Dosen } from '../interfaces';
+import { Kelas, Ruangan, MataKuliah, Pengajaran, DataType, Dosen } from '../types/type';
 import { formItemsMap, columnsMap } from '../config';
 
 const { TabPane } = Tabs;
@@ -17,10 +17,11 @@ const DataManagementPage: React.FC = () => {
   const [selectedRecord, setSelectedRecord] = useState<DataType | null>(null);
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
+  const [view, setView] = useState<'kelas' | 'ruangan' | 'mata-kuliah' | 'pengajaran' | 'dosen'>('kelas');
+
   const handleSearch = (value: string) => {
     setSearchText(value); 
   };
-  const [view, setView] = useState<'kelas' | 'ruangan' | 'mata-kuliah' | 'pengajaran' | 'dosen'>('kelas');
 
   const fetchData = async (view: string) => {
     setLoading(true);
@@ -51,14 +52,42 @@ const DataManagementPage: React.FC = () => {
     }
   };
 
+  const handleOk = async (values: DataType) => {
+    try {
+      let url = `https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/${view}`;
+      const method = isEditModal ? 'PUT' : 'POST';
 
+      if (isEditModal && selectedRecord) {
+        url = `${url}/${selectedRecord.id}`;
+      }
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...values,
+          id: selectedRecord?.id,
+        }),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to save data');
+      }
+      message.success(`Data ${isEditModal ? 'updated' : 'added'} successfully`);
+      fetchData(view);
+      setIsModalVisible(false);
+    } catch (error) {
+      console.error('Error saving data:', error);
+      message.error('Failed to save data');
+    }
+  };
 
   const filteredData = data.filter((item: any) => {
     const searchString = searchText.toLowerCase();
     return Object.values(item).some((val: any) => {
       if (typeof val === 'object' && val !== null) {
         return Object.values(val).some((nestedVal: any) => {
-        
           if (typeof nestedVal === 'string' || typeof nestedVal === 'number') {
             return nestedVal.toString().toLowerCase().includes(searchString);
           }
@@ -68,30 +97,36 @@ const DataManagementPage: React.FC = () => {
       return val.toString().toLowerCase().includes(searchString);
     });
   });
-  
 
   return (
     <div>
-    <Card>
-      <Tabs activeKey={view} onChange={(key) => setView(key as any)}>
-        <TabPane tab="Kelas" key="kelas" />
-        <TabPane tab="Ruangan" key="ruangan" />
-        <TabPane tab="Mata Kuliah" key="mata-kuliah" />
-        <TabPane tab="Pengajaran" key="pengajaran" />
-        <TabPane tab="Dosen" key="dosen" />
-      </Tabs>
-      <Button type="primary" onClick={() => showModal()} style={{ marginTop: 16, marginRight:16 }}>
-        +
-      </Button>
-      <SearchBar searchText={searchText} onSearch={handleSearch} />
-      <TableView
-        columns={columnsMap[view]}
-        data={filteredData}
-        loading={loading}
-        onEdit={showModal}
+      <Card>
+        <Tabs activeKey={view} onChange={(key) => setView(key as any)}>
+          <TabPane tab="Kelas" key="kelas" />
+          <TabPane tab="Ruangan" key="ruangan" />
+          <TabPane tab="Mata Kuliah" key="mata-kuliah" />
+          <TabPane tab="Pengajaran" key="pengajaran" />
+          <TabPane tab="Dosen" key="dosen" />
+        </Tabs>
+        <Button type="primary" onClick={() => showModal()} style={{ marginTop: 16, marginRight:16 }}>
+          +
+        </Button>
+        <SearchBar searchText={searchText} onSearch={handleSearch} />
+        <TableView
+          columns={columnsMap[view]}
+          data={filteredData}
+          loading={loading}
+          onEdit={showModal}
+        />
+      </Card>
+      <ModalForm
+        visible={isModalVisible}
+        onCancel={() => setIsModalVisible(false)}
+        onOk={handleOk}
+        form={form}
+        isEdit={isEditModal}
+        view={view}
       />
-    </Card>
-
     </div>
   );
 };

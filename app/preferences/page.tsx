@@ -1,74 +1,26 @@
+// PreferencesPage.tsx
 "use client";
 
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
-import {
-  Card,
-  Checkbox,
-  Select,
-  Button,
-  Typography,
-  message,
-  Spin,
-  Table,
-  Row,
-  Col,
-  Tag,
-  Space,
-} from "antd";
+import { Card, Button, Typography, message, Spin, Space } from "antd";
 import { useRouter } from "next/navigation";
+import TemporarySchedule from "../components/TemporarySchedule";
+import PreferenceCheckbox from "../components/PreferencesCheckbox"; 
+import { Dosen, Kelas, Ruangan, Slot, ScheduleItem } from "../types/type";
 
 const { Title } = Typography;
 
-interface Dosen {
-  id: number;
-  nama_depan: string;
-  nama_belakang: string;
-  preferensi: { id: number; slot: { id: number } }[];
-}
-
-interface Slot {
-  id: number;
-  day: string;
-  start_time: string;
-  end_time: string;
-}
-
-interface ScheduleItem {
-  id: number;
-  id_slot: number;
-  id_ruangan: number;
-  id_pengajaran: number;
-  slot: {
-    id: number;
-    day: string;
-    start_time: string;
-    end_time: string;
-  };
-  ruangan: {
-    nama_ruangan: string;
-  };
-  pengajaran: {
-    dosen: {
-      id: number;
-      nama_depan: string;
-      nama_belakang: string;
-    };
-    kelas: {
-      nama_kelas: string;
-    };
-    mata_kuliah: {
-      nama_mata_kuliah: string;
-    };
-  };
-  is_conflicted?: boolean;
-}
 
 export default function PreferencesPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [dosen, setDosen] = useState<Dosen[]>([]);
+  const [kelas, setKelas] = useState<Kelas[]>([]);
+  const [ruangan, setRuangan] = useState<Ruangan[]>([]);
   const [selectedDosenId, setSelectedDosenId] = useState<number | null>(null);
+  const [selectedKelasId, setSelectedKelasId] = useState<number | null>(null);
+  const [selectedRuanganId, setSelectedRuanganId] = useState<number | null>(null);
   const [slots, setSlots] = useState<Slot[]>([]);
   const [selectedSlots, setSelectedSlots] = useState<number[]>([]);
   const [allScheduleData, setAllScheduleData] = useState<ScheduleItem[]>([]);
@@ -78,188 +30,149 @@ export default function PreferencesPage() {
   const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   useEffect(() => {
-    if (status === "loading") {
-      return;
-    } else if (status === "unauthenticated") {
+    if (status === "unauthenticated") {
       router.push("/login");
-    } else if (status === "authenticated") {
-      setIsLoading(true);
-
-      // Fetch dosen data
-      fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/dosen?page=1&size=500")
-        .then((res) => res.json())
-        .then((data) => {
-          setDosen(data.items);
-        });
-
-      // Fetch slot data
-      fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/slot?page=1&size=500")
-        .then((res) => res.json())
-        .then((data) => {
-          setSlots(data.items);
-        });
-
-      // Fetch all schedule data
-      fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/jadwal/temp?page=1&size=500")
-        .then((res) => res.json())
-        .then((data) => {
-          setAllScheduleData(data.items);
-          setFilteredScheduleData(data.items);
-        })
-        .finally(() => setIsLoading(false));
     }
-  }, [status, router]);
+  }, [status]);
 
   useEffect(() => {
-    if (selectedDosenId) {
+    const fetchData = async () => {
       setIsLoading(true);
-      const selectedDosen = dosen.find((d) => d.id === selectedDosenId);
-      const initialPreferences = selectedDosen?.preferensi.map((pref) => pref.slot.id) || [];
-      setSelectedSlots(initialPreferences);
+      try {
+        const [dosenRes, slotsRes, scheduleRes, kelasRes, ruanganRes] = await Promise.all([
+          fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/dosen?page=1&size=500"),
+          fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/slot?page=1&size=500"),
+          fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/jadwal/temp?page=1&size=500"),
+          fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/kelas?page=1&size=500"),
+          fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/ruangan?page=1&size=500"),
+        ]);
 
-      // Filter schedule data for the selected dosen
-      const filteredData = allScheduleData.filter(
-        (item) => item.pengajaran.dosen.id === selectedDosenId
-      );
-      setFilteredScheduleData(filteredData);
+        if (!dosenRes.ok || !slotsRes.ok || !scheduleRes.ok || !kelasRes.ok || !ruanganRes.ok) {
+          throw new Error("Failed to fetch data");
+        }
 
-      setIsLoading(false);
-    } else {
-      setFilteredScheduleData(allScheduleData); // Show all schedule data if no dosen selected
-    }
-  }, [selectedDosenId, dosen, allScheduleData]);
+        const [dosenData, slotsData, scheduleData, kelasData, ruanganData] = await Promise.all([
+          dosenRes.json(),
+          slotsRes.json(),
+          scheduleRes.json(),
+          kelasRes.json(),
+          ruanganRes.json(),
+        ]);
+
+        setDosen(dosenData.items);
+        setSlots(slotsData.items);
+        setAllScheduleData(scheduleData.items);
+        setKelas(kelasData.items);
+        setRuangan(ruanganData.items);
+      } catch (error) {
+        message.error("Failed to load data");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    setFilteredScheduleData(
+      allScheduleData.filter((item) => {
+        const matchDosen = selectedDosenId ? item.pengajaran.dosen.id === selectedDosenId : true;
+        const matchKelas = selectedKelasId ? item.pengajaran.kelas.id === selectedKelasId : true;
+        const matchRuangan = selectedRuanganId ? item.ruangan.id === selectedRuanganId : true;
+        return matchDosen && matchKelas && matchRuangan;
+      })
+    );
+  }, [selectedDosenId, selectedKelasId, selectedRuanganId, allScheduleData]);
+
+  const handleDosenChange = (dosenId: number | null) => {
+    setSelectedDosenId(dosenId);
+  };
+
+  const handleKelasChange = (kelasId: number | null) => {
+    setSelectedKelasId(kelasId);
+  };
+
+  const handleRuanganChange = (ruanganId: number | null) => {
+    setSelectedRuanganId(ruanganId);
+  };
+
+  const handleSlotChange = (slotId: number, checked: boolean) => {
+    setSelectedSlots((prevSelectedSlots) =>
+      checked ? [...prevSelectedSlots, slotId] : prevSelectedSlots.filter((id) => id !== slotId)
+    );
+  };
 
   const handleSavePreferences = async () => {
-    if (!selectedDosenId) return;
-
     try {
-      const response = await fetch(`/api/preferences?dosenId=${selectedDosenId}`, {
+      const response = await fetch(`/api/dosen/preferences/${selectedDosenId}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slotIds: selectedSlots }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          selectedSlots,
+        }),
       });
 
-      if (response.ok) {
-        message.success("Preferences saved successfully!");
-      } else {
-        message.error("Failed to save preferences.");
+      if (!response.ok) {
+        throw new Error("Failed to save preferences");
       }
+
+      message.success("Preferences saved successfully");
     } catch (error) {
-      console.error("Error saving preferences:", error);
-      message.error("An error occurred while saving preferences.");
+      message.error("Failed to save preferences");
     }
   };
 
-  const scheduleForDay = (day: string) => {
-    return filteredScheduleData
-      .filter((item) => item.slot.day === day)
-      .reduce((acc, item) => {
-        if (!acc[item.slot.start_time]) {
-          acc[item.slot.start_time] = [];
-        }
-        acc[item.slot.start_time].push(item);
-        return acc;
-      }, {} as Record<string, ScheduleItem[]>);
-  };
-
-  const timeSlots = Array.from(new Set(slots.map(slot => slot.start_time))).sort();
+  if (isLoading) {
+    return (
+      <Space style={{ width: "100%", justifyContent: "center", marginTop: "20px" }}>
+        <Spin size="large" />
+      </Space>
+    );
+  }
 
   return (
-    <div>
-      {isLoading ? (
-        <Spin size="large" style={{ width: "full", display: "flex", height: "100vh", justifyContent: "center", alignItems: "center" }} />
-      ) : (
-        <Row gutter={16}>
-          <Col xs={24} md={6}>
-            <Card title="Select Instructor">
-            <Select
-              placeholder="Select Instructor"
-              value={selectedDosenId || "all"} 
-              onChange={(value) => setSelectedDosenId(value !== "all" ? Number(value) : null)} 
-              style={{ width: "100%" }}
-            >
-              <Select.Option key="all" value="all">
-                Show All
-              </Select.Option>
-              {Array.isArray(dosen) && dosen.length > 0 ? (
-                dosen.map((dosen) => (
-                  <Select.Option key={dosen.id} value={dosen.id}>
-                    {`${dosen.nama_depan} ${dosen.nama_belakang}`}
-                  </Select.Option>
-                ))
-              ) : (
-                <Select.Option disabled>No instructors available</Select.Option>
-              )}
-            </Select>
+    <Space direction="vertical" style={{ width: "100%" }}>
+      <Card>
+        <Title level={3}>Set Preferences</Title>
+        <TemporarySchedule
+          slots={slots}
+          filteredScheduleData={filteredScheduleData}
+          dosen={dosen}
+          kelas={kelas}
+          ruangan={ruangan}
+          selectedDosenId={selectedDosenId}
+          selectedKelasId={selectedKelasId}
+          selectedRuanganId={selectedRuanganId}
+          onDosenChange={handleDosenChange}
+          onKelasChange={handleKelasChange}
+          onRuanganChange={handleRuanganChange}
+        />
+      </Card>
 
+      <Card title="Preferences">
+        <Space direction="vertical" style={{ width: "100%" }}>
+          {slots.map((slot) => (
+            <PreferenceCheckbox
+              key={slot.id}
+              slotId={slot.id}
+              day={slot.day}
+              startTime={slot.start_time}
+              endTime={slot.end_time}
+              checked={selectedSlots.includes(slot.id)}
+              onChange={(checked) => handleSlotChange(slot.id, checked)}
+            />
+          ))}
+        </Space>
+      </Card>
 
-
-            </Card>
-            {selectedDosenId && (
-              <Card title="Preferences" style={{ marginTop: 16 }}>
-                <Space direction="vertical" style={{ width: "100%" }}>
-                  {slots.map((slot) => (
-                    <Checkbox
-                      key={slot.id}
-                      checked={selectedSlots.includes(slot.id)}
-                      onChange={(e) => {
-                        setSelectedSlots(
-                          e.target.checked
-                            ? [...selectedSlots, slot.id]
-                            : selectedSlots.filter((id) => id !== slot.id)
-                        );
-                      }}
-                    >
-                      {`${slot.day} ${slot.start_time} - ${slot.end_time}`}
-                    </Checkbox>
-                  ))}
-                  <Button type="primary" onClick={handleSavePreferences}>
-                    Save Preferences
-                  </Button>
-                </Space>
-              </Card>
-            )}
-          </Col>
-          <Col xs={24} md={18}>
-            <Card title="Temporary Schedule">
-              <Table
-                pagination={false}
-                dataSource={timeSlots.map((time, index) => ({ key: index, time }))}
-                columns={[
-                  {
-                    title: "Time",
-                    dataIndex: "time",
-                    key: "time",
-                    render: (time: string) => time,
-                    fixed: "left",
-                    width: 100,
-                  },
-                  ...daysOfWeek.map((day) => ({
-                    title: day,
-                    dataIndex: "time",
-                    key: day,
-                    width: 150,
-                    render: (time: string) => {
-                      const scheduleItems = scheduleForDay(day)[time] || [];
-                      return (
-                        <>
-                          {scheduleItems.map((item) => (
-                            <Tag key={item.id} color={item.is_conflicted ? "red" : "green"}>
-                              {item.pengajaran.mata_kuliah.nama_mata_kuliah}
-                              ({item.pengajaran.kelas.nama_kelas})
-                            </Tag>
-                          ))}
-                        </>
-                      );
-                    },
-                  })),
-                ]}
-                scroll={{ x: true }}
-              />
-            </Card>
-          </Col>
-        </Row>
-      )}
-    </div>
+      <Space>
+        <Button type="primary" onClick={handleSavePreferences}>
+          Save Preferences
+        </Button>
+      </Space>
+    </Space>
   );
 }
