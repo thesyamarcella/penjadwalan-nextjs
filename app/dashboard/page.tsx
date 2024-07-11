@@ -14,6 +14,7 @@ import {
   Radio,
   RadioChangeEvent,
   message,
+  Skeleton,
 } from "antd";
 import { useRouter } from "next/navigation";
 import dayjs from "dayjs";
@@ -242,13 +243,19 @@ export default function DashboardPage() {
 
       {/* Data Count Cards */}
       <Row gutter={16} style={{ marginBottom: 16 }}>
-        {Object.keys(counts).map(key => (
-          <Col key={key} xs={24} sm={12} md={8} lg={6}>
-            <Card>
-            <Statistic title={key} value={counts[key as keyof typeof counts]} /> 
-            </Card>
+        {isLoading ? (
+          <Col span={24}>
+            <Skeleton active paragraph={{ rows: 1 }} /> 
           </Col>
-        ))}
+        ) : (
+          Object.keys(counts).map((key) => (
+            <Col key={key} xs={24} sm={12} md={8} lg={6}>
+              <Card>
+                <Statistic title={key} value={counts[key as keyof typeof counts]} />
+              </Card>
+            </Col>
+          ))
+        )}
       </Row>
 
       {/* View Mode Switch */}
@@ -263,7 +270,9 @@ export default function DashboardPage() {
 
       {/* Schedule Table or Timetable View */}
       <Card title="Jadwal">
-        {viewMode === "table" ? (
+        {isLoading ? (
+          <Skeleton active />
+        ) : viewMode === "table" ? (
           <Card>
             <Row gutter={16} style={{ marginBottom: 16 }}>
               <Col xs={24} md={12} lg={16}>

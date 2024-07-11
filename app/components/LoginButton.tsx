@@ -2,8 +2,6 @@
 import { Button } from "antd";
 import { useRouter } from "next/navigation";
 import { useSession, signIn, signOut } from "next-auth/react";
-import { Kelas, Ruangan, MataKuliah, Pengajaran, DataType } from '../interfaces';
-import { formItemsMap, columnsMap } from '../config';
 
 
 const LoginButton = () => {

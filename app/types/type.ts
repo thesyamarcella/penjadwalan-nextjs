@@ -64,6 +64,15 @@ export interface MataKuliah {
   nama_prodi_en: string;
 }
 
+export interface Preference {
+  id: number;
+  created_at: string;
+  updated_at: string; 
+  id_dosen: number;
+  slot_id: number; 
+  slot?: Slot; // This might be optional for your use case
+}
+
 export interface ScheduleItem {
   id: number;
   id_slot: number;
@@ -159,7 +168,7 @@ export interface FormItem {
   name: string;
   label: string;
   rules?: { required?: boolean; message: string }[];
-  type?: 'switch' | 'text' | 'number' | 'select'; 
+  type?: 'switch' | 'text' | 'number' | 'select' | 'time'; 
   valuePropName?: string;
   options?: { label: string; value: string | number }[]; 
 }

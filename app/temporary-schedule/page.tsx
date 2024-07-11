@@ -13,6 +13,7 @@ const { Title } = Typography;
 
 export default function TemporarySchedulePage() {
   const { data: session, status } = useSession() as unknown as { data: SessionType, status: string };
+  const [googleCalendarToken, setGoogleCalendarToken] = useState(null);
   const router = useRouter();
   const [scheduleData, setScheduleData] = useState<ScheduleItem[]>([]);
   const [filteredData, setFilteredData] = useState<ScheduleItem[]>([]);
@@ -28,6 +29,7 @@ export default function TemporarySchedulePage() {
   const [selectedDayFilter, setSelectedDayFilter] = useState<string | null>(null);
   const [selectedScheduleId, setSelectedScheduleId] = useState<number | null>(null);
   const [hasConflicts, setHasConflicts] = useState(false);
+  const [selectedSchedule, setSelectedSchedule] = useState<ScheduleItem | null>(null);
   const [regenerateResponse, setRegenerateResponse] = useState<null | {
     best_violating_preferences: string[];
     conflict_list: string[];
@@ -118,6 +120,8 @@ export default function TemporarySchedulePage() {
       const emptySlots = data || [];
       setEmptySlots(emptySlots);
       setSelectedScheduleId(scheduleItem.id);
+      setIsModalVisible(true);
+      setSelectedSchedule(scheduleItem); // Store the selected schedule
       setIsModalVisible(true);
     } catch (error) {
       console.error("Error fetching empty slots:", error);
@@ -381,11 +385,11 @@ export default function TemporarySchedulePage() {
           </Row>
     
           {/* Modal for Fix Schedule */}
-         <Modal
-        title="Select Empty Slot and Room"
+          <Modal
+        title={`Fix Conflict for: ${selectedSchedule?.pengajaran?.mata_kuliah?.nama_mata_kuliah}`} // New title
         visible={isModalVisible}
-        onCancel={() => setIsModalVisible(false)}
-        footer={null} // Removing the footer
+        onCancel={() => { setIsModalVisible(false); setSelectedSchedule(null); }} // Reset selected schedule
+        footer={null}
       >
         <Space direction="vertical" style={{ width: '100%' }}>
           <Input.Search

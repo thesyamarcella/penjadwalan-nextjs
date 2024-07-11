@@ -33,7 +33,8 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
       icon: <TeamOutlined />,
 
     },
-    { key: "/preferences", label: "Preferences", icon: <SettingOutlined /> },
+    { key: "/dosen-preference", label: "Preferensi Dosen", icon: <SettingOutlined /> },
+    { key: "/dosen-schedule", label: "Jadwal Dosen", icon: <ScheduleOutlined /> },
     { key: "/login", label: <LoginButton/> },
     
   

@@ -6,7 +6,6 @@ import { useEffect, useState } from "react";
 import { Card, Button, Typography, message, Spin, Space } from "antd";
 import { useRouter } from "next/navigation";
 import TemporarySchedule from "../components/TemporarySchedule";
-import PreferenceCheckbox from "../components/PreferencesCheckbox"; 
 import { Dosen, Kelas, Ruangan, Slot, ScheduleItem } from "../types/type";
 
 const { Title } = Typography;
@@ -151,28 +150,6 @@ export default function PreferencesPage() {
           onRuanganChange={handleRuanganChange}
         />
       </Card>
-
-      <Card title="Preferences">
-        <Space direction="vertical" style={{ width: "100%" }}>
-          {slots.map((slot) => (
-            <PreferenceCheckbox
-              key={slot.id}
-              slotId={slot.id}
-              day={slot.day}
-              startTime={slot.start_time}
-              endTime={slot.end_time}
-              checked={selectedSlots.includes(slot.id)}
-              onChange={(checked) => handleSlotChange(slot.id, checked)}
-            />
-          ))}
-        </Space>
-      </Card>
-
-      <Space>
-        <Button type="primary" onClick={handleSavePreferences}>
-          Save Preferences
-        </Button>
-      </Space>
     </Space>
   );
 }

@@ -42,6 +42,25 @@ export const formItemsMap: { [key: string]: FormItem[] } = {
       { name: 'id_mata_kuliah', label: 'ID Mata Kuliah', rules: [{ required: true, message: 'Please input the ID Mata Kuliah!' }] },
       { name: 'id_semester', label: 'ID semester', rules: [{ required: true, message: 'Please input the ID Semester!' }] },
     ],
+    slot: [
+      { 
+        name: 'day', 
+        label: 'Hari', 
+        rules: [{ required: true, message: 'Masukkan hari!' }], 
+        type: 'select', 
+        options: [
+          { label: 'Senin', value: 'Mon' },
+          { label: 'Selasa', value: 'Tue' },
+          { label: 'Rabu', value: 'Wed' },
+          { label: 'Kamis', value: 'Thu' },
+          { label: 'Jumat', value: 'Fri' },
+          { label: 'Sabtu', value: 'Sat' },
+        ]
+      },
+      { name: 'start_time', label: 'Waktu Mulai', rules: [{ required: true, message: 'Masukkan waktu mulai!' }], type: 'time' },
+      { name: 'end_time', label: 'Waktu Selesai', rules: [{ required: true, message: 'Masukkan waktu selesai!' }], type: 'time' },
+      { name: 'is_lab_slot', label: 'Slot Lab', valuePropName: 'checked', type: 'switch' },
+    ],
   };
   
   export const columnsMap: { [key: string]: ColumnItem[] } = {
@@ -117,6 +136,21 @@ export const formItemsMap: { [key: string]: FormItem[] } = {
           key: 'semester',
           render: (semester: { jenis: string; tahun_ajaran: string }) =>
             semester ? `${semester.jenis} ${semester.tahun_ajaran}` : 'N/A',
+        },
+      ],
+      slot: [
+        { title: 'Hari', dataIndex: 'day', key: 'day' },
+        { 
+          title: 'Waktu Mulai', 
+          dataIndex: 'start_time', 
+          key: 'start_time',
+          render: (text: string) => text ? text.slice(0,5) : 'N/A',  // Check if text is defined
+        },
+        { 
+          title: 'Waktu Selesai', 
+          dataIndex: 'end_time', 
+          key: 'end_time',
+          render: (text: string) => text ? text.slice(0,5) : 'N/A',  // Check if text is defined
         },
       ],
   };

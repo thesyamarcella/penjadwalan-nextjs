@@ -4,7 +4,7 @@ import { Button, message, Card, Form, Tabs } from 'antd';
 import TableView from '../components/TableView';
 import ModalForm from '../components/ModalForm';
 import SearchBar from '../components/SearchBar';
-import { Kelas, Ruangan, MataKuliah, Pengajaran, DataType, Dosen } from '../types/type';
+import { Kelas, Ruangan, MataKuliah, Pengajaran, DataType, Dosen, Slot } from '../types/type';
 import { formItemsMap, columnsMap } from '../config';
 
 const { TabPane } = Tabs;
@@ -17,7 +17,7 @@ const DataManagementPage: React.FC = () => {
   const [selectedRecord, setSelectedRecord] = useState<DataType | null>(null);
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
-  const [view, setView] = useState<'kelas' | 'ruangan' | 'mata-kuliah' | 'pengajaran' | 'dosen'>('kelas');
+  const [view, setView] = useState<'kelas' | 'ruangan' | 'mata-kuliah' | 'pengajaran' | 'dosen' | 'slot'>('kelas');
 
   const handleSearch = (value: string) => {
     setSearchText(value); 
@@ -107,6 +107,7 @@ const DataManagementPage: React.FC = () => {
           <TabPane tab="Mata Kuliah" key="mata-kuliah" />
           <TabPane tab="Pengajaran" key="pengajaran" />
           <TabPane tab="Dosen" key="dosen" />
+          <TabPane tab="Slot" key="slot" />
         </Tabs>
         <Button type="primary" onClick={() => showModal()} style={{ marginTop: 16, marginRight:16 }}>
           +

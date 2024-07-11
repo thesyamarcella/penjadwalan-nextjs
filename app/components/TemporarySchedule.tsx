@@ -51,7 +51,15 @@ const TemporarySchedule: React.FC<TemporaryScheduleProps> = ({
    
       <Card style={{ width: "100%" }}>
         
-          <Space style={{ width:"full" }}>
+        <Space
+        style={{
+          width: "full",
+          marginBottom: "20px",
+          display: "flex",
+          justifyContent: "center",
+          gap: "10px",
+        }}
+      >
             <Select
               showSearch
               placeholder="Select Instructor"
@@ -120,7 +128,10 @@ const TemporarySchedule: React.FC<TemporaryScheduleProps> = ({
               title: "Time",
               dataIndex: "time",
               key: "time",
-              render: (time: string) => time,
+              render: (time: string) => {
+                const matchingSlot = slots.find(slot => slot.start_time === time);
+                return matchingSlot ? `${matchingSlot.start_time} - ${matchingSlot.end_time}` : time;
+              },
               fixed: "left",
               width: 100,
             },
