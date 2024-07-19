@@ -2,12 +2,32 @@ import { ColumnItem, FormItem } from "./types/type";
 
 export const formItemsMap: { [key: string]: FormItem[] } = {
     dosen: [
-      { name: 'nip', label: 'NIP', rules: [{ required: true, message: 'Please input the NIP!' }] },
-      { name: 'nidn', label: 'NIDN', rules: [{ required: true, message: 'Please input the NIDN!' }] },
-      { name: 'nama_depan', label: 'Nama Depan', rules: [{ required: true, message: 'Please input the first name!' }] },
-      { name: 'nama_belakang', label: 'Nama Belakang', rules: [{ required: true, message: 'Please input the last name!' }] },
-      { name: 'gelar_belakang', label: 'Gelar Belakang', rules: [{ required: true, message: 'Please input the title!' }] },
-      { name: 'email', label: 'Email', rules: [{ required: true, message: 'Please input the email!' }] },
+      { name: 'nip', label: 'NIP', rules: [{ required: true, message: 'Mohon masukkan NIP!' }] },
+      { name: 'nidn', label: 'NIDN', rules: [{ required: true, message: 'Mohon masukkan NIDN!' }] },
+      { name: 'nama_depan', label: 'Nama Depan', rules: [{ required: true, message: 'Mohon masukkan nama depan!' }] },
+      { name: 'nama_belakang', label: 'Nama Belakang', rules: [{ required: true, message: 'Mohon masukkan nama belakang!' }] },
+      { name: 'gelar_depan', label: 'Gelar Depan' }, // Tidak wajib diisi
+      { name: 'gelar_belakang', label: 'Gelar Belakang' }, // Tidak wajib diisi
+      { 
+        name: 'email', 
+        label: 'Email', 
+        rules: [
+          { required: true, message: 'Mohon masukkan email!' },
+          {message: 'Mohon masukkan alamat email yang valid!' } // Validasi format email
+        ] 
+      },
+      { 
+        name: 'telp_seluler', // Sesuaikan nama field dengan struktur data
+        label: 'No. HP', 
+        rules: [
+          { required: true, message: 'Mohon masukkan nomor HP!' },
+          { message: 'Mohon masukkan hanya angka!' } // Validasi format nomor HP
+        ] 
+      },
+      { name: 'alamat', label: 'Alamat' }, 
+      { name: 'agama', label: 'Agama' },
+      { name: 'id_pegawai', label: 'id_pegawai' }, 
+      { name: 'inisial', label: 'inisial' },      // Tidak wajib diisi
     ],
     kelas: [
       { name: 'nama_kelas', label: 'Nama Kelas', rules: [{ required: true, message: 'Please input the class name!' }] },

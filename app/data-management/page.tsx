@@ -54,34 +54,38 @@ const DataManagementPage: React.FC = () => {
 
   const handleOk = async (values: DataType) => {
     try {
-      let url = `https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/${view}`;
+      const url = isEditModal && selectedRecord 
+        ? `https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/${view}/${selectedRecord.id}`
+        : `https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/${view}`;
+  
       const method = isEditModal ? 'PUT' : 'POST';
-
-      if (isEditModal && selectedRecord) {
-        url = `${url}/${selectedRecord.id}`;
-      }
-
+  
+      // Hapus ID dari values jika sedang melakukan edit (PUT)
+      const requestBody = isEditModal ? { ...values } : { ...values, id: selectedRecord?.id }; 
+  
+      console.log("Data being sent:", requestBody);
+  
       const response = await fetch(url, {
         method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...values,
-          id: selectedRecord?.id,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
       });
-      if (!response.ok) {
+  
+      if (response.ok) {
+        message.success(`Data ${isEditModal ? 'updated' : 'added'} successfully`);
+        fetchData(view);
+      } else {
         throw new Error('Failed to save data');
       }
-      message.success(`Data ${isEditModal ? 'updated' : 'added'} successfully`);
-      fetchData(view);
-      setIsModalVisible(false);
+  
     } catch (error) {
       console.error('Error saving data:', error);
       message.error('Failed to save data');
+    } finally {
+      setIsModalVisible(false); 
     }
   };
+  
 
   const filteredData = data.filter((item: any) => {
     const searchString = searchText.toLowerCase();

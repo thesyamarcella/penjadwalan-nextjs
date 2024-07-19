@@ -29,6 +29,9 @@ export default function TemporarySchedulePage() {
   const [selectedDayFilter, setSelectedDayFilter] = useState<string | null>(null);
   const [selectedScheduleId, setSelectedScheduleId] = useState<number | null>(null);
   const [hasConflicts, setHasConflicts] = useState(false);
+  const [isSaving, setIsSaving] = useState(false); 
+  const [saveStatus, setSaveStatus] = useState<'success' | 'error' | null>(null);
+
   const [selectedSchedule, setSelectedSchedule] = useState<ScheduleItem | null>(null);
   const [regenerateResponse, setRegenerateResponse] = useState<null | {
     best_violating_preferences: string[];
@@ -161,25 +164,34 @@ export default function TemporarySchedulePage() {
   };
 
   const handleGoogleCalendarIntegration = async () => {
+    setIsSaving(true); // Show loading state
+    setSaveStatus(null); // Clear previous messages
+
     try {
       const response = await fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/jadwal/", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${session?.user.accessToken}`,
+        headers: { 
+          Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbiI6InlhMjkuYTBBWG9vQ2dzblBvZE1YN1lNQUNVWVpoU0JPUGUtWEVOUVJYRW81YkRzN3Z4Z2N6YXAtTFpvQUVrUm1RZDRkQjQtZWN4R3Y0WHFJR1dDS2xqZ0pfQWFxRWdZQm1TT2I4SkQ4UWU3WUVHcGZZcUtxT0cyYjI2VDNyS3FMdmpWdmJ6WUFKalFJNWs5clJsYWZKNEJDQjBHdmx0LUdmQXdzV1BRekl3QWFDZ1lLQVJZU0FSTVNGUUhHWDJNaVZXeWtCUlBzXzNGdkEyQnBxbk5zeHcwMTcxIiwicmVmcmVzaF90b2tlbiI6IjEvLzA0TXBmWVFJZC1Ca1RDZ1lJQVJBQUdBUVNOd0YtTDlJclNJREVUMHVrRHNlNkd5NzBoa0gtckRpb2tfV1F6dWtPX2tDZ3RzZzVwRG8tOXFIOHpuTkhJaHliOHVfdVVGRmZreVEiLCJ0b2tlbl91cmkiOiJodHRwczovL29hdXRoMi5nb29nbGVhcGlzLmNvbS90b2tlbiIsInNjb3BlcyI6WyJodHRwczovL3d3dy5nb29nbGVhcGlzLmNvbS9hdXRoL2NhbGVuZGFyLmV2ZW50cyIsImh0dHBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL2F1dGgvdXNlcmluZm8ucHJvZmlsZSIsIm9wZW5pZCIsImh0dHBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL2F1dGgvdXNlcmluZm8uZW1haWwiXSwidXNlcm5hbWUiOiJUaGVzeWEiLCJ1c2VySWQiOiJ0aGVzeWFtYXJjZWxsYUBnbWFpbC5jb20iLCJwcm9maWxlX3BpY3R1cmUiOiJodHRwczovL2xoMy5nb29nbGV1c2VyY29udGVudC5jb20vYS9BQ2c4b2NMSlJfbm5rSFhVRUwxelpUVkQzMWFpMTZ1YjBiUHN1OTFFWTVMWmQwaHU1SEdFX2VfQj1zOTYtYyIsImV4cCI6MTcyMTM2OTc4Nn0.NhpDT5-g8qaEaeuFg3TZK2FeEOpRxWOQ-QH_GZvWiDA`,
           "Content-Type": "application/json",
         },
       });
 
       if (response.ok) {
+        setSaveStatus('success'); // Mark success
         message.success("Integrated with Google Calendar successfully!");
       } else {
+        setSaveStatus('error'); // Mark error
         message.error("Failed to integrate with Google Calendar.");
       }
     } catch (error) {
+      setSaveStatus('error'); // Mark error
       console.error("Error integrating with Google Calendar:", error);
       message.error("An error occurred while integrating with Google Calendar.");
+    } finally {
+      setIsSaving(false); // Hide loading state
     }
   };
+  
 
   useEffect(() => {
     const filtered = emptySlots.filter((item) => {
@@ -359,10 +371,17 @@ export default function TemporarySchedulePage() {
                   </Col>
     
                   <Col xs={24} md={6} lg={4}>
-                    <Button onClick={handleGoogleCalendarIntegration} style={{ width: "100%" }}>
-                      Simpan Jadwal
-                    </Button>
-                  </Col>
+                  <Button
+                    onClick={handleGoogleCalendarIntegration}
+                    loading={isSaving} // Loading state
+                    style={{ width: "100%" }}
+                  >
+                    Simpan Jadwal
+                  </Button>
+                  {/* Display save status messages */}
+                  {saveStatus === 'success' && <Alert message="Jadwal berhasil disimpan!" type="success" style={{ marginTop: 8 }} />}
+                  {saveStatus === 'error' && <Alert message="Gagal menyimpan jadwal!" type="error" style={{ marginTop: 8 }} />} 
+        </Col>
                 </Row>
                 <Table
                   columns={columns}
