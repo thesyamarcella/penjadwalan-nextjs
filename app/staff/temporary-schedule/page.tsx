@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import { Card, Table, Tag, Typography, Alert, Input, Space, Button, message, Modal, Form, Row, Col, Select } from "antd";
 import { TablePaginationConfig, SorterResult, FilterValue } from 'antd/es/table/interface';
 import { useRouter } from "next/navigation";
@@ -11,8 +12,8 @@ import { ScheduleItem, EmptySlot, ColumnItem } from '../../types/type';
 const { Title } = Typography;
 
 export default function TemporarySchedulePage() {
-  // const { data: session, status } = useSession() as unknown as { data: SessionType, status: string };
-  const [googleCalendarToken, setGoogleCalendarToken] = useState<string | null>(null);
+  const { data: session, status } = useSession() as unknown as { data: SessionType, status: string };
+  const [googleCalendarToken, setGoogleCalendarToken] = useState(null);
   const router = useRouter();
   const [scheduleData, setScheduleData] = useState<ScheduleItem[]>([]);
   const [filteredData, setFilteredData] = useState<ScheduleItem[]>([]);
@@ -159,34 +160,20 @@ export default function TemporarySchedulePage() {
     }
   };
 
-  useEffect(() => {
-    const storedToken = localStorage.getItem('authToken');
-    if (storedToken) {
-      setGoogleCalendarToken(storedToken); 
-    }
-  }, []);
-
   const handleGoogleCalendarIntegration = async () => {
-    if (!googleCalendarToken) {
-      message.error('Anda belum login. Silakan login terlebih dahulu.');
-      return;
-    }
-
     try {
       const response = await fetch("https://penjadwalan-be-j6usm5hcwa-et.a.run.app/api/jadwal/", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${googleCalendarToken}`, // Gunakan token yang tersimpan
+          Authorization: `Bearer ${session?.user.accessToken}`,
           "Content-Type": "application/json",
         },
-        // (data yang akan dikirim, misalnya jadwal)
       });
 
       if (response.ok) {
         message.success("Integrated with Google Calendar successfully!");
       } else {
-        const errorData = await response.json();
-        message.error(`Failed to integrate: ${errorData.error || 'Unknown error'}`);
+        message.error("Failed to integrate with Google Calendar.");
       }
     } catch (error) {
       console.error("Error integrating with Google Calendar:", error);
@@ -391,7 +378,7 @@ export default function TemporarySchedulePage() {
                     showSizeChanger: true,
                   }}
                   onChange={onChange}
-                  scroll={{ x: true, y: 400 }}
+                  scroll={{ y: "calc(100vh - 250px)" }}
                 />
               </Card>
             </Col>
@@ -435,7 +422,6 @@ export default function TemporarySchedulePage() {
               setEmptySlotPageSize(newPageSize);
             },
           }}
-          scroll={{ x: true, y: 400 }}
         />
       </Modal>
         </div>
