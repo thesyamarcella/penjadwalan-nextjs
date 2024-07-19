@@ -13,7 +13,7 @@ const LoginButton = () => {
       const result = await signIn("google"); 
       if (result) {
        
-        router.push("/dashboard");
+        
       } else {
 
       }

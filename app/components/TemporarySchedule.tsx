@@ -1,7 +1,8 @@
 // TemporarySchedule.tsx
 import React from "react";
-import { Table, Tag, Card, Select, Space } from "antd";
+import { Table, Tag, Card, Select, Space, Form } from "antd";
 import { Dosen, Kelas, Ruangan, Slot, ScheduleItem } from "../types/type";
+import { useMediaQuery } from 'react-responsive';
 
 
 interface TemporaryScheduleProps {
@@ -46,18 +47,25 @@ const TemporarySchedule: React.FC<TemporaryScheduleProps> = ({
   };
 
   const timeSlots = Array.from(new Set(slots.map((slot) => slot.start_time))).sort();
+  const isMobile = useMediaQuery({ maxWidth: 767 }); // Adjust breakpoint as needed
+  const [form] = Form.useForm();
+
 
   return (
    
       <Card style={{ width: "100%" }}>
+        <div>
+
+        </div>
         
         <Space
         style={{
-          width: "full",
+          width: "100%",
           marginBottom: "20px",
           display: "flex",
-          justifyContent: "center",
+          justifyContent: isMobile ? "start" : "center", // Align to start on mobile
           gap: "10px",
+          flexWrap: "wrap", // Allow wrapping on mobile
         }}
       >
             <Select
@@ -118,7 +126,7 @@ const TemporarySchedule: React.FC<TemporaryScheduleProps> = ({
                 <Select.Option disabled>No ruangan available</Select.Option>
               )}
             </Select>
-          </Space>
+        </Space>
 
         <Table
           pagination={false}
@@ -132,8 +140,8 @@ const TemporarySchedule: React.FC<TemporaryScheduleProps> = ({
                 const matchingSlot = slots.find(slot => slot.start_time === time);
                 return matchingSlot ? `${matchingSlot.start_time} - ${matchingSlot.end_time}` : time;
               },
-              fixed: "left",
-              width: 100,
+              fixed: isMobile ? false : "left",
+              width: isMobile ? 80 : 100,
             },
             ...daysOfWeek.map((day) => ({
               title: day,
