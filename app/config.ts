@@ -84,6 +84,7 @@ export const formItemsMap: { [key: string]: FormItem[] } = {
   };
   
   export const columnsMap: { [key: string]: ColumnItem[] } = {
+    
     dosen: [
       { title: 'NIP', dataIndex: 'nip', key: 'nip', sorter: (a, b) => a.nip.localeCompare(b.nip) },
       { title: 'NIDN', dataIndex: 'nidn', key: 'nidn', sorter: (a, b) => (a.nidn ?? '').localeCompare(b.nidn ?? '') },
@@ -125,6 +126,13 @@ export const formItemsMap: { [key: string]: FormItem[] } = {
     'mata-kuliah': [
       { title: 'Nama Mata Kuliah', dataIndex: 'nama_mata_kuliah', key: 'nama_mata_kuliah', sorter: (a, b) => a.nama_mata_kuliah.localeCompare(b.nama_mata_kuliah) },
       { title: 'SKS', dataIndex: 'sks', key: 'sks', sorter: (a, b) => a.sks - b.sks },
+      { title: 'Is Lab', dataIndex: 'is_lab', key: 'is_lab', filters: [
+        { text: 'Yes', value: true },
+        { text: 'No', value: false },
+      ],
+      onFilter: (value, record) => record.is_lab === value,
+      render: (is_lab: boolean) => (is_lab ? 'Yes' : 'No')
+    },
     ],
     
     pengajaran: [

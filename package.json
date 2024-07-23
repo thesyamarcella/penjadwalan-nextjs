@@ -11,12 +11,16 @@
   "dependencies": {
     "@ant-design/nextjs-registry": "^1.0.0",
     "antd": "^5.18.3",
+    "jspdf": "^2.5.1",
+    "jspdf-autotable": "^3.8.2",
     "next": "14.2.4",
     "next-auth": "^4.24.7",
     "react": "^18",
     "react-dom": "^18",
+    "react-query": "^3.39.3",
     "react-responsive": "^10.0.0",
-    "react-router-dom": "^6.24.0"
+    "react-router-dom": "^6.24.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/node": "^20",

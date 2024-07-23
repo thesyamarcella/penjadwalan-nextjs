@@ -3,12 +3,13 @@
 
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
-import { Card, Button, Typography, message, Spin, Space, Select, Table, Checkbox } from "antd";
+import { Card, Button, Typography, message, Spin, Space, Select, Table, Checkbox, Radio } from "antd";
 import { useRouter } from "next/navigation";
 import { Dosen, Slot, Preference } from "../types/type";
 
 const { Title } = Typography;
 const { Option } = Select;
+const { Group: RadioGroup, Button: RadioButton } = Radio;
 
 export default function DosenPreferencesPage() {
   const { data: session, status } = useSession();
@@ -20,6 +21,7 @@ export default function DosenPreferencesPage() {
   >([]);
   const [selectedDosen, setSelectedDosen] = useState<Dosen | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [checkAllOption, setCheckAllOption] = useState<string>("none");
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -61,6 +63,7 @@ export default function DosenPreferencesPage() {
     const selected = dosen.find(d => d.id === dosenId) || null;
     setSelectedDosen(selected);
     setPreferences(selected?.preferensi || []);
+    setCheckAllOption("none"); // Reset check all option when changing dosen
   };
 
   const handleCheckboxChange = (slotId: number, checked: boolean) => {
@@ -68,15 +71,24 @@ export default function DosenPreferencesPage() {
 
     const updatedPreferences = checked
         ? [...preferences, {
-           
             id: preferences.length + 1,
             slot: { id: slotId },
         }]
         : preferences.filter(pref => pref.slot.id !== slotId);
 
     setPreferences(updatedPreferences);
-};
+  };
 
+  const handleSelectAll = (option: string) => {
+    if (!selectedDosen) return;
+
+    const updatedPreferences = option === "all"
+      ? slots.map(slot => ({ id: preferences.length + 1, slot: { id: slot.id } }))
+      : [];
+
+    setPreferences(updatedPreferences);
+    setCheckAllOption(option);
+  };
 
   const handleSavePreferences = async () => {
     if (!selectedDosen) {
@@ -124,9 +136,9 @@ export default function DosenPreferencesPage() {
 
   const filledSlots = slots?.filter(slot => 
     dosen?.some(dosen => dosen.preferensi?.some(pref => pref.slot?.id === slot.id))
-);
+  );
 
-const displayedSlots = selectedDosen ? preferences.map(pref => pref.slot) : filledSlots;
+  const displayedSlots = selectedDosen ? preferences.map(pref => pref.slot) : filledSlots;
 
   const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const timeSlots = Array.from(
@@ -166,7 +178,6 @@ const displayedSlots = selectedDosen ? preferences.map(pref => pref.slot) : fill
     return rowData;
   });
 
-
   return (
     <Space direction="vertical" style={{ width: "100%" }}>
       <Card>
@@ -185,6 +196,12 @@ const displayedSlots = selectedDosen ? preferences.map(pref => pref.slot) : fill
       </Card>
 
       <Card title="Preferences">
+        <Space direction="vertical" style={{ width: "100%", marginBottom: "10px" }}>
+          <RadioGroup onChange={(e) => handleSelectAll(e.target.value)} value={checkAllOption}>
+            <RadioButton value="all">Check All</RadioButton>
+            <RadioButton value="none">Uncheck All</RadioButton>
+          </RadioGroup>
+        </Space>
         <Table columns={columns} dataSource={dataSource} pagination={false} rowKey="time" />
       </Card>
 
