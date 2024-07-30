@@ -31,7 +31,7 @@ const ExportToExcel: React.FC<ExportToExcelProps> = ({ data }) => {
   <Button 
     onClick={exportToExcel} 
     >
-     Export   <FileExcelOutlined />
+     <FileExcelOutlined />
     </Button>
 </Tooltip>
 };
